@@ -10,27 +10,53 @@ interface Message {
     timestamp: Date;
 }
 
-const ChatInterface: React.FC = () => {
-    // Persistence Logic
-    const [messages, setMessages] = useState<Message[]>(() => {
-        const saved = localStorage.getItem('miku_chat_history');
-        if (saved) {
-            return JSON.parse(saved, (key, value) => {
-                if (key === 'timestamp') return new Date(value);
-                return value;
-            });
-        }
-        return [{
-            id: 'welcome',
-            text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
-            sender: 'miku',
-            timestamp: new Date(),
-        }];
-    });
+interface ChatInterfaceProps {
+    activeSessionId: string | null;
+    onSessionCreated: (sessionId: string) => void;
+}
 
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessionCreated }) => {
+    const [messages, setMessages] = useState<Message[]>([{
+        id: 'welcome',
+        text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
+        sender: 'miku',
+        timestamp: new Date(),
+    }]);
+
+    // Load messages when session changes
     useEffect(() => {
-        localStorage.setItem('miku_chat_history', JSON.stringify(messages));
-    }, [messages]);
+        const loadSessionMessages = async () => {
+            if (activeSessionId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/api/sessions/${activeSessionId}/messages`);
+                    const data = await response.json();
+
+                    // Convert backend messages to frontend format
+                    const loadedMessages = data.messages.map((msg: any, index: number) => ({
+                        id: `${activeSessionId}-${index}`,
+                        text: msg.content,
+                        sender: msg.role === 'user' ? 'user' : 'miku',
+                        timestamp: new Date(msg.timestamp)
+                    }));
+
+                    setMessages(loadedMessages);
+                } catch (error) {
+                    console.error('Error loading session messages:', error);
+                    setMessages([]);
+                }
+            } else {
+                // Show welcome message for new chat
+                setMessages([{
+                    id: 'welcome',
+                    text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
+                    sender: 'miku',
+                    timestamp: new Date(),
+                }]);
+            }
+        };
+
+        loadSessionMessages();
+    }, [activeSessionId]);
 
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -75,12 +101,37 @@ const ChatInterface: React.FC = () => {
                 formData.append('image', imageToSend);
             }
 
+            // Add session_id if exists
+            if (activeSessionId) {
+                formData.append('session_id', activeSessionId);
+            }
+
+            // Prepare history (last 3 rounds = last 6 messages, excluding the current new one)
+            const historyMessages = messages
+                .slice(-6) // Get last 6 messages
+                .filter(msg => !msg.image) // Filter out messages with images for now (text-only history)
+                .map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'model',
+                    content: msg.text
+                }));
+
+            formData.append('history', JSON.stringify(historyMessages));
+
             const response = await fetch('http://localhost:8000/api/chat', {
                 method: 'POST',
                 body: formData,
             });
 
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status}`);
+            }
+
             const data = await response.json();
+
+            // If a new session was created, notify parent
+            if (data.session_id && !activeSessionId) {
+                onSessionCreated(data.session_id);
+            }
 
             const mikuReply: Message = {
                 id: (Date.now() + 1).toString(),
@@ -92,6 +143,13 @@ const ChatInterface: React.FC = () => {
             setMessages(prev => [...prev, mikuReply]);
         } catch (error) {
             console.error("Error sending message:", error);
+            const errorMessage: Message = {
+                id: Date.now().toString(),
+                text: "Gomenne! I couldn't reach the server. Please check your connection or the backend console. 😣",
+                sender: 'miku',
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, errorMessage]);
         } finally {
             setIsTyping(false);
         }
@@ -113,8 +171,8 @@ const ChatInterface: React.FC = () => {
                         <img src="/miku_avatar.png" alt="Miku" className="w-full h-full object-cover" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-display font-bold text-white">Hatsune Miku</h1>
-                        <p className="text-xs text-miku-light flex items-center gap-1">
+                        <h1 className="text-xl font-display font-bold text-theme-text">Hatsune Miku</h1>
+                        <p className="text-xs text-miku-dark flex items-center gap-1">
                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                             Online
                         </p>
@@ -137,8 +195,8 @@ const ChatInterface: React.FC = () => {
                             <div className={`max-w-[70%] ${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
                                 <div
                                     className={`p-3 rounded-2xl ${msg.sender === 'user'
-                                            ? 'bg-magenta/20 border border-magenta/50 text-white rounded-tr-none'
-                                            : 'bg-miku/20 border border-miku/50 text-white rounded-tl-none'
+                                            ? 'bg-magenta/10 border border-magenta/30 text-theme-text rounded-tr-none'
+                                            : 'bg-miku/10 border border-miku/30 text-theme-text rounded-tl-none'
                                         }`}
                                 >
                                     {msg.image && (
@@ -146,7 +204,7 @@ const ChatInterface: React.FC = () => {
                                     )}
                                     <p className="whitespace-pre-wrap">{msg.text}</p>
                                 </div>
-                                <span className="text-[10px] text-slate-400 mt-1 px-1">
+                                <span className="text-[10px] text-theme-muted mt-1 px-1">
                                     {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                 </span>
                             </div>
@@ -160,7 +218,7 @@ const ChatInterface: React.FC = () => {
                         animate={{ opacity: 1 }}
                         className="flex justify-start"
                     >
-                        <div className="bg-miku/20 border border-miku/50 p-3 rounded-2xl rounded-tl-none flex gap-1">
+                        <div className="bg-miku/10 border border-miku/30 p-3 rounded-2xl rounded-tl-none flex gap-1">
                             <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
                             <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                             <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
@@ -173,7 +231,7 @@ const ChatInterface: React.FC = () => {
             <div className="glass-panel rounded-2xl p-2 flex items-end gap-2 shrink-0">
                 <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="p-3 text-miku hover:text-white hover:bg-miku/20 rounded-xl transition-colors"
+                    className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl transition-colors"
                 >
                     <ImageIcon size={20} />
                 </button>
@@ -185,9 +243,9 @@ const ChatInterface: React.FC = () => {
                     accept="image/*"
                 />
 
-                <div className="flex-1 bg-slate-800/50 rounded-xl p-2 border border-slate-700 focus-within:border-miku transition-colors flex flex-col">
+                <div className="flex-1 bg-tech-panel/50 rounded-xl p-2 border border-slate-200 focus-within:border-miku transition-colors flex flex-col">
                     {selectedImage && (
-                        <div className="flex items-center justify-between bg-slate-700/50 p-1 rounded mb-1 text-xs">
+                        <div className="flex items-center justify-between bg-slate-100 p-1 rounded mb-1 text-xs">
                             <span className="truncate max-w-[200px]">{selectedImage.name}</span>
                             <button onClick={() => setSelectedImage(null)} className="text-red-400 hover:text-red-300">×</button>
                         </div>
@@ -197,7 +255,7 @@ const ChatInterface: React.FC = () => {
                         onChange={(e) => setInputText(e.target.value)}
                         onKeyDown={handleKeyPress}
                         placeholder="Type a message to Miku..."
-                        className="bg-transparent border-none focus:ring-0 text-white resize-none h-10 max-h-32 py-2 px-1 w-full"
+                        className="bg-transparent border-none focus:ring-0 text-theme-text resize-none h-10 max-h-32 py-2 px-1 w-full placeholder-theme-muted"
                         rows={1}
                     />
                 </div>

@@ -4,21 +4,26 @@ export default {
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
+  darkMode: 'class', // Enable class-based dark mode (or theme-based)
   theme: {
     extend: {
       colors: {
         miku: {
-          DEFAULT: '#39C5BB', // Primary Teal
-          dark: '#289F97',    // Shadow/Hover
-          light: '#A0E6E1',   // Light accent
+          DEFAULT: 'rgb(var(--color-miku) / <alpha-value>)',
+          dark: 'rgb(var(--color-miku-dark) / <alpha-value>)',
+          light: 'rgb(var(--color-miku-light) / <alpha-value>)',
         },
         magenta: {
-          DEFAULT: '#E056FD', // Accent
+          DEFAULT: '#E91E63',
           glow: '#FF85FF',
         },
         tech: {
-          bg: '#0F172A',      // Deep Space
-          panel: '#1E293B',   // Card BG
+          bg: 'rgb(var(--color-bg) / <alpha-value>)',
+          panel: 'rgb(var(--color-panel) / <alpha-value>)',
+        },
+        theme: {
+          text: 'rgb(var(--color-text) / <alpha-value>)',
+          muted: 'rgb(var(--color-text-muted) / <alpha-value>)',
         }
       },
       fontFamily: {
@@ -36,8 +41,8 @@ export default {
           '50%': { transform: 'translateY(-10px)' },
         },
         'pulse-glow': {
-          '0%, 100%': { opacity: 1, boxShadow: '0 0 10px #39C5BB' },
-          '50%': { opacity: .5, boxShadow: '0 0 20px #39C5BB' },
+          '0%, 100%': { opacity: 1, boxShadow: '0 0 10px rgb(var(--color-miku))' },
+          '50%': { opacity: .5, boxShadow: '0 0 20px rgb(var(--color-miku))' },
         }
       }
     },

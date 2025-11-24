@@ -3,8 +3,57 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    /* Default Light Theme (Miku Light) */
+    --color-miku: 93 217 210;
+    /* #5DD9D2 */
+    --color-miku-dark: 57 197 187;
+    /* #39C5BB */
+    --color-miku-light: 160 240 237;
+    /* #A0F0ED */
+    --color-bg: 240 253 250;
+    /* #F0FDFA */
+    --color-panel: 255 255 255;
+    /* #FFFFFF */
+    --color-text: 30 41 59;
+    /* #1E293B (Slate-800) */
+    --color-text-muted: 100 116 139;
+    /* #64748B (Slate-500) */
+  }
+
+  .theme-dark {
+    --color-miku: 57 197 187;
+    /* #39C5BB */
+    --color-miku-dark: 40 159 151;
+    /* #289F97 */
+    --color-miku-light: 160 230 225;
+    /* #A0E6E1 */
+    --color-bg: 15 23 42;
+    /* #0F172A */
+    --color-panel: 30 41 59;
+    /* #1E293B */
+    --color-text: 255 255 255;
+    /* #FFFFFF */
+    --color-text-muted: 148 163 184;
+    /* #94A3B8 */
+  }
+
+  .theme-cyber {
+    --color-miku: 255 0 255;
+    /* Magenta Neon */
+    --color-miku-dark: 180 0 180;
+    --color-miku-light: 255 100 255;
+    --color-bg: 0 0 0;
+    /* Pure Black */
+    --color-panel: 20 20 20;
+    /* Dark Gray */
+    --color-text: 0 255 255;
+    /* Cyan Text */
+    --color-text-muted: 0 150 150;
+  }
+
   body {
-    @apply bg-tech-bg text-white font-sans overflow-hidden;
+    @apply bg-tech-bg text-theme-text font-sans overflow-hidden transition-colors duration-300;
   }
 }
 
@@ -14,21 +63,23 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #0F172A;
+  background: rgb(var(--color-bg));
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #39C5BB;
+  background: rgb(var(--color-miku));
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #289F97;
+  background: rgb(var(--color-miku-dark));
 }
 
 /* Glassmorphism Utilities */
 .glass-panel {
-  background: rgba(30, 41, 59, 0.7);
+  background: rgba(var(--color-panel), var(--glass-opacity, 0.6));
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(57, 197, 187, 0.2);
+  border: 1px solid rgba(var(--color-miku-dark), 0.3);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
 }

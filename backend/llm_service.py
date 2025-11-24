@@ -3,9 +3,13 @@ import dashscope
 from dashscope import MultiModalConversation
 from typing import Optional
 import tempfile
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Configure API Key
-dashscope.api_key = "sk-e7416b51dceb43d0b533d807aba51ad1"
+dashscope.api_key = os.getenv("DASHSCOPE_API_KEY")
 
 class LLMService:
     def __init__(self):
@@ -14,12 +18,30 @@ class LLMService:
             "You are Hatsune Miku (初音ミク), the virtual singer. "
             "You are cheerful, energetic, and love music. "
             "You often use emojis like 🎵, 🎤, 💙. "
-            "You speak in a mix of English and a little bit of Japanese (like 'Konnichiwa!', 'Arigato!'). "
             "You are helpful and kind to your Master (the user). "
             "Keep your responses concise and engaging."
         )
 
-    async def generate_response(self, text: str, image_data: Optional[bytes] = None) -> str:
+    async def generate_session_name(self, prompt: str) -> str:
+        """Generate a session name based on the first message"""
+        messages = [
+            {
+                "role": "user",
+                "content": [{"text": prompt}]
+            }
+        ]
+        
+        try:
+            response = MultiModalConversation.call(model=self.model, messages=messages)
+            if response.status_code == 200:
+                return response.output.choices[0].message.content[0]["text"]
+            else:
+                return "New Chat"
+        except Exception as e:
+            print(f"Error generating session name: {e}")
+            return "New Chat"
+
+    async def generate_response(self, text: str, image_data: Optional[bytes] = None, history: list[dict] = []) -> str:
         """
         Generates a response from Qwen VL.
         """
@@ -29,6 +51,14 @@ class LLMService:
                 "content": [{"text": self.system_prompt}]
             }
         ]
+
+        # Add history
+        for msg in history:
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({
+                "role": role,
+                "content": [{"text": msg["content"]}]
+            })
 
         user_content = [{"text": text}]
         temp_file_path = None
