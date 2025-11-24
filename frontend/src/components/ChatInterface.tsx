@@ -60,6 +60,25 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessio
         loadSessionMessages();
     }, [activeSessionId]);
 
+    // Random status messages
+    const statusMessages = [
+        { text: '练舞中', emoji: '💃' },
+        { text: '吃大葱中', emoji: '🥬' },
+        { text: '写歌中', emoji: '🎵' },
+        { text: '睡觉中', emoji: '😴' },
+        { text: '演唱会中', emoji: '🎤' },
+        { text: '录音中', emoji: '🎙️' },
+        { text: '摸鱼中', emoji: '🐟' },
+        { text: '追剧中', emoji: '📺' },
+        { text: '打游戏中', emoji: '🎮' },
+        { text: '喝奶茶中', emoji: '🧋' },
+        { text: 'Online', emoji: '💚' }
+    ];
+
+    const [currentStatus] = useState(() =>
+        statusMessages[Math.floor(Math.random() * statusMessages.length)]
+    );
+
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [isTyping, setIsTyping] = useState(false);
@@ -177,7 +196,8 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessio
                         <h1 className="text-xl font-display font-bold text-theme-text">Hatsune Miku</h1>
                         <p className="text-xs text-miku-dark flex items-center gap-1">
                             <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-                            Online
+                            <span>{currentStatus.emoji}</span>
+                            {currentStatus.text}
                         </p>
                     </div>
                 </div>
