@@ -1,6 +1,7 @@
 import React from 'react';
-import { Settings, User } from 'lucide-react';
+import { Settings } from 'lucide-react';
 import ChatSessionList from './ChatSessionList';
+import RandomMikuImage from './RandomMikuImage';
 
 interface ChatSession {
     id: string;
@@ -40,7 +41,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             {/* Chat Sessions */}
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden mb-4">
                 <ChatSessionList
                     sessions={sessions}
                     activeSessionId={activeSessionId}
@@ -50,8 +51,13 @@ const Sidebar: React.FC<SidebarProps> = ({
                 />
             </div>
 
+            {/* Random Miku Image */}
+            <div className="mb-4">
+                <RandomMikuImage />
+            </div>
+
             {/* Bottom Actions */}
-            <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-700 space-y-2">
+            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                     onClick={onOpenSettings}
                     className="w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-black/5 hover:text-slate-800 transition-all"

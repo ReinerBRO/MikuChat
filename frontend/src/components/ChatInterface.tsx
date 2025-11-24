@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Image as ImageIcon, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AnimatedAvatar from './AnimatedAvatar';
 
 interface Message {
     id: string;
@@ -165,7 +166,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessio
     return (
         <div className="flex flex-col h-full relative z-10">
             {/* Header */}
-            <header className="flex items-center justify-between p-4 glass-panel rounded-t-2xl mb-4 shrink-0">
+            <header className="flex items-center justify-between p-4 glass-panel rounded-t-2xl mb-4 shrink-0 relative z-20">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-full bg-miku border-2 border-white overflow-hidden relative">
                         <img src="/miku_avatar.png" alt="Miku" className="w-full h-full object-cover" />
@@ -182,53 +183,60 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessio
             </header>
 
             {/* Chat Area */}
-            <div ref={chatContainerRef} className="flex-1 overflow-y-auto glass-panel rounded-2xl p-4 mb-4 space-y-4 custom-scrollbar">
-                <AnimatePresence>
-                    {messages.map((msg) => (
-                        <motion.div
-                            key={msg.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                            <div className={`max-w-[70%] ${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
-                                <div
-                                    className={`p-3 rounded-2xl ${msg.sender === 'user'
+            <div ref={chatContainerRef} className="flex-1 overflow-y-auto glass-panel rounded-2xl p-4 mb-4 space-y-4 custom-scrollbar relative">
+                {/* Animated Avatar */}
+                <div className="absolute bottom-4 right-4 z-0 pointer-events-auto">
+                    <AnimatedAvatar className="w-[280px] h-[280px]" />
+                </div>
+
+                <div className="relative z-10">
+                    <AnimatePresence>
+                        {messages.map((msg) => (
+                            <motion.div
+                                key={msg.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0 }}
+                                className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                            >
+                                <div className={`max-w-[70%] ${msg.sender === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
+                                    <div
+                                        className={`p-3 rounded-2xl ${msg.sender === 'user'
                                             ? 'bg-magenta/10 border border-magenta/30 text-theme-text rounded-tr-none'
                                             : 'bg-miku/10 border border-miku/30 text-theme-text rounded-tl-none'
-                                        }`}
-                                >
-                                    {msg.image && (
-                                        <img src={msg.image} alt="Uploaded" className="max-w-full rounded-lg mb-2 border border-white/20" />
-                                    )}
-                                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                                            }`}
+                                    >
+                                        {msg.image && (
+                                            <img src={msg.image} alt="Uploaded" className="max-w-full rounded-lg mb-2 border border-white/20" />
+                                        )}
+                                        <p className="whitespace-pre-wrap">{msg.text}</p>
+                                    </div>
+                                    <span className="text-[10px] text-theme-muted mt-1 px-1">
+                                        {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
                                 </div>
-                                <span className="text-[10px] text-theme-muted mt-1 px-1">
-                                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+
+                    {isTyping && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="flex justify-start"
+                        >
+                            <div className="bg-miku/10 border border-miku/30 p-3 rounded-2xl rounded-tl-none flex gap-1">
+                                <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                             </div>
                         </motion.div>
-                    ))}
-                </AnimatePresence>
-
-                {isTyping && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="flex justify-start"
-                    >
-                        <div className="bg-miku/10 border border-miku/30 p-3 rounded-2xl rounded-tl-none flex gap-1">
-                            <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                        </div>
-                    </motion.div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Input Area */}
-            <div className="glass-panel rounded-2xl p-2 flex items-end gap-2 shrink-0">
+            <div className="glass-panel rounded-2xl p-2 flex items-end gap-2 shrink-0 relative z-20">
                 <button
                     onClick={() => fileInputRef.current?.click()}
                     className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl transition-colors"

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
 import DashboardLayout from './components/DashboardLayout';
 import Settings from './components/Settings';
+import LandingPage from './components/LandingPage';
 
 interface ChatSession {
   id: string;
@@ -12,6 +13,7 @@ interface ChatSession {
 }
 
 function App() {
+  const [showLanding, setShowLanding] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem('miku_theme') || 'light');
   const [bgOpacity, setBgOpacity] = useState(() => parseInt(localStorage.getItem('miku_bg_opacity') || '50'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -89,6 +91,10 @@ function App() {
     setActiveSessionId(sessionId);
     fetchSessions();
   };
+
+  if (showLanding) {
+    return <LandingPage onEnter={() => setShowLanding(false)} />;
+  }
 
   return (
     <div className={`min-h-screen bg-tech-bg relative overflow-hidden font-sans text-theme-text transition-colors duration-300`}>

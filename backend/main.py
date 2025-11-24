@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from llm_service import LLMService
 from chat_manager import ChatManager, ChatSession
+from image_service import ImageService
 
 app = FastAPI(title="MikuChat API", description="Backend for MikuChat WebUI")
 
@@ -23,6 +24,7 @@ app.add_middleware(
 
 llm_service = LLMService()
 chat_manager = ChatManager()
+image_service = ImageService()
 
 class ChatRequest(BaseModel):
     text: str
@@ -123,3 +125,17 @@ async def chat(
         "response": response,
         "session_id": session_id
     }
+
+# Random Miku Image Endpoint
+@app.get("/api/random-miku-image")
+async def get_random_miku_image():
+    """Get a random Hatsune Miku image from Safebooru"""
+    image_data = image_service.get_random_miku_image()
+    
+    if image_data:
+        return image_data
+    else:
+        return {
+            "error": "Failed to fetch image",
+            "image_url": None
+        }
