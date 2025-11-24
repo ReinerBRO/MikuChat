@@ -48,8 +48,18 @@ class ImageService:
                 if not images:
                     continue
                 
-                # Randomly select one image
-                image = random.choice(images)
+                # Filter out images with 'demon' in tags
+                filtered_images = [
+                    img for img in images 
+                    if 'demon' not in img.get('tags', '').lower()
+                ]
+                
+                if not filtered_images:
+                    sys.stderr.write("No images after filtering 'demon' tags\n")
+                    continue
+                
+                # Randomly select one image from filtered list
+                image = random.choice(filtered_images)
                 
                 # Construct the full image URL
                 if 'file_url' in image:

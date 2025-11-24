@@ -14,9 +14,10 @@ interface Message {
 interface ChatInterfaceProps {
     activeSessionId: string | null;
     onSessionCreated: (sessionId: string) => void;
+    currentUser: string;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessionCreated }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessionCreated, currentUser }) => {
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
         text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
@@ -98,6 +99,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ activeSessionId, onSessio
         try {
             const formData = new FormData();
             formData.append('text', newMessage.text);
+            formData.append('username', currentUser);
             if (imageToSend) {
                 formData.append('image', imageToSend);
             }

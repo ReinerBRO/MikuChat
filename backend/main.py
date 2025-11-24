@@ -38,9 +38,9 @@ async def root():
 
 # Session Management Endpoints
 @app.post("/api/sessions")
-async def create_session(first_message: str = Form(...)):
+async def create_session(first_message: str = Form(...), username: str = Form(...)):
     """Create a new chat session"""
-    session_id = await chat_manager.create_session(first_message)
+    session_id = await chat_manager.create_session(first_message, username)
     session = chat_manager.get_session(session_id)
     return {
         "session_id": session_id,
@@ -49,9 +49,9 @@ async def create_session(first_message: str = Form(...)):
     }
 
 @app.get("/api/sessions")
-async def list_sessions():
-    """List all chat sessions"""
-    sessions = chat_manager.list_sessions()
+async def list_sessions(username: str):
+    """List all chat sessions for a user"""
+    sessions = chat_manager.list_sessions(username)
     return {
         "sessions": [
             {
@@ -66,15 +66,15 @@ async def list_sessions():
     }
 
 @app.delete("/api/sessions/{session_id}")
-async def delete_session(session_id: str):
+async def delete_session(session_id: str, username: str):
     """Delete a chat session"""
-    success = chat_manager.delete_session(session_id)
+    success = chat_manager.delete_session(session_id, username)
     return {"success": success}
 
 @app.post("/api/sessions/{session_id}/rename")
-async def rename_session(session_id: str, request: RenameRequest):
+async def rename_session(session_id: str, request: RenameRequest, username: str = Form(...)):
     """Rename a chat session"""
-    success = chat_manager.rename_session(session_id, request.name)
+    success = chat_manager.rename_session(session_id, request.name, username)
     return {"success": success}
 
 @app.get("/api/sessions/{session_id}/messages")
@@ -87,6 +87,7 @@ async def get_session_messages(session_id: str):
 @app.post("/api/chat")
 async def chat(
     text: str = Form(...),
+    username: str = Form(...),
     session_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
     history: str = Form("[]")
@@ -95,7 +96,7 @@ async def chat(
     
     # If no session_id, create a new session
     if not session_id:
-        session_id = await chat_manager.create_session(text)
+        session_id = await chat_manager.create_session(text, username)
     
     image_data = None
     if image:
@@ -110,16 +111,19 @@ async def chat(
     response = await llm_service.generate_response(text, image_data, history_list)
     
     # Save messages to session
+    from datetime import datetime
+    timestamp = datetime.now().isoformat()
+    
     chat_manager.add_message(session_id, {
         "role": "user",
         "content": text,
-        "timestamp": chat_manager.sessions[session_id].last_message_at
-    })
+        "timestamp": timestamp
+    }, username)
     chat_manager.add_message(session_id, {
         "role": "assistant",
         "content": response,
-        "timestamp": chat_manager.sessions[session_id].last_message_at
-    })
+        "timestamp": timestamp
+    }, username)
     
     return {
         "response": response,

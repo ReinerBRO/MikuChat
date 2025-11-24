@@ -3,6 +3,7 @@ import ChatInterface from './components/ChatInterface';
 import DashboardLayout from './components/DashboardLayout';
 import Settings from './components/Settings';
 import LandingPage from './components/LandingPage';
+import LoginPage from './components/LoginPage';
 
 interface ChatSession {
   id: string;
@@ -14,6 +15,8 @@ interface ChatSession {
 
 function App() {
   const [showLanding, setShowLanding] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState<string>('');
   const [theme, setTheme] = useState(() => localStorage.getItem('miku_theme') || 'light');
   const [bgOpacity, setBgOpacity] = useState(() => parseInt(localStorage.getItem('miku_bg_opacity') || '50'));
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -38,9 +41,23 @@ function App() {
   }, [theme, bgOpacity]);
 
   useEffect(() => {
-    // Load sessions on mount
-    fetchSessions();
+    // Check for auto-login
+    const savedUser = localStorage.getItem('miku_user');
+    const savedPassword = localStorage.getItem('miku_password');
+    const rememberMe = localStorage.getItem('miku_remember_me') === 'true';
+
+    if (savedUser && savedPassword && rememberMe) {
+      setCurrentUser(savedUser);
+      setIsAuthenticated(true);
+    }
   }, []);
+
+  // Load sessions when user is authenticated
+  useEffect(() => {
+    if (currentUser && isAuthenticated) {
+      fetchSessions();
+    }
+  }, [currentUser, isAuthenticated]);
 
   useEffect(() => {
     // Save active session
@@ -50,8 +67,10 @@ function App() {
   }, [activeSessionId]);
 
   const fetchSessions = async () => {
+    if (!currentUser) return;
+
     try {
-      const response = await fetch('http://localhost:8000/api/sessions');
+      const response = await fetch(`http://localhost:8000/api/sessions?username=${encodeURIComponent(currentUser)}`);
       const data = await response.json();
       setSessions(data.sessions || []);
     } catch (error) {
@@ -70,7 +89,7 @@ function App() {
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      await fetch(`http://localhost:8000/api/sessions/${sessionId}`, {
+      await fetch(`http://localhost:8000/api/sessions/${sessionId}?username=${encodeURIComponent(currentUser)}`, {
         method: 'DELETE'
       });
 
@@ -92,8 +111,59 @@ function App() {
     fetchSessions();
   };
 
+  const handleLogin = (username: string, password: string, rememberMe: boolean) => {
+    // Check if this is a returning user
+    const savedUser = localStorage.getItem('miku_user');
+    const savedPassword = localStorage.getItem('miku_password');
+
+    // If user exists, validate password
+    if (savedUser && savedUser === username) {
+      if (savedPassword !== password) {
+        // Password mismatch - return error
+        return { success: false, error: 'Incorrect password' };
+      }
+    }
+
+    // Login successful
+    setCurrentUser(username);
+    setIsAuthenticated(true);
+
+    if (rememberMe) {
+      localStorage.setItem('miku_user', username);
+      localStorage.setItem('miku_password', password);
+      localStorage.setItem('miku_remember_me', 'true');
+    } else {
+      // Still save credentials for session validation, but don't auto-login
+      localStorage.setItem('miku_user', username);
+      localStorage.setItem('miku_password', password);
+      localStorage.removeItem('miku_remember_me');
+    }
+
+    return { success: true };
+  };
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setCurrentUser('');
+    localStorage.removeItem('miku_user');
+    localStorage.removeItem('miku_password');
+    localStorage.removeItem('miku_remember_me');
+  };
+
+  const handleUsernameChange = (newUsername: string) => {
+    setCurrentUser(newUsername);
+    const rememberMe = localStorage.getItem('miku_remember_me') === 'true';
+    if (rememberMe) {
+      localStorage.setItem('miku_user', newUsername);
+    }
+  };
+
   if (showLanding) {
     return <LandingPage onEnter={() => setShowLanding(false)} />;
+  }
+
+  if (!isAuthenticated) {
+    return <LoginPage onLogin={handleLogin} />;
   }
 
   return (
@@ -122,6 +192,7 @@ function App() {
           <ChatInterface
             activeSessionId={activeSessionId}
             onSessionCreated={handleSessionCreated}
+            currentUser={currentUser}
           />
         </DashboardLayout>
       </div>
@@ -133,6 +204,9 @@ function App() {
         onThemeChange={setTheme}
         bgOpacity={bgOpacity}
         onOpacityChange={setBgOpacity}
+        currentUser={currentUser}
+        onUsernameChange={handleUsernameChange}
+        onLogout={handleLogout}
       />
     </div>
   );
