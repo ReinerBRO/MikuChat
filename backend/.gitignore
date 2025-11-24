@@ -9,7 +9,7 @@ pycache__/
 *$py.class
 
 # Environment
-
+.env
 .venv
 env/
 venv/
