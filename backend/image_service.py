@@ -15,7 +15,8 @@ class ImageService:
         proxies_list = [
             None, # Try direct connection first
             {'http': 'http://127.0.0.1:7897', 'https': 'http://127.0.0.1:7897'},
-            {'http': 'http://127.0.0.1:7890', 'https': 'http://127.0.0.1:7890'}
+            {'http': 'http://127.0.0.1:7890', 'https': 'http://127.0.0.1:7890'},
+            {'http': 'http://127.0.0.1:10809', 'https': 'http://127.0.0.1:10809'}, # v2rayN default
         ]
 
         for proxy in proxies_list:
@@ -36,7 +37,7 @@ class ImageService:
                 response = requests.get(
                     self.safebooru_url, 
                     params=params, 
-                    timeout=3,
+                    timeout=5,
                     proxies=proxy
                 )
                 
@@ -82,5 +83,12 @@ class ImageService:
                 sys.stderr.write(f"Error via {proxy_name}: {str(e)}\n")
                 continue
         
-        sys.stderr.write("All connection attempts failed\n")
-        return None
+        sys.stderr.write("All connection attempts failed. Using fallback.\n")
+        return {
+            "image_url": "/miku_avatar.png",
+            "source_url": "https://github.com/ReinerBRO/MikuChat",
+            "tags": ["network_error", "offline_mode", "miku_cute"],
+            "width": 500,
+            "height": 500,
+            "rating": "safe"
+        }

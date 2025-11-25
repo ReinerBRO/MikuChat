@@ -1,5 +1,4 @@
 import React from 'react';
-import { Settings } from 'lucide-react';
 import ChatSessionList from './ChatSessionList';
 import RandomMikuImage from './RandomMikuImage';
 
@@ -12,7 +11,16 @@ interface ChatSession {
 }
 
 interface SidebarProps {
-    onOpenSettings?: () => void;
+    onOpenSettings?: () => void; // Kept as optional but unused for now to avoid breaking parent usage if not updated everywhere, but actually DashboardLayout passes it. Wait, DashboardLayout passes it to Sidebar?
+    // DashboardLayout passes it to Sidebar in the chat view.
+    // So I should keep it in the interface but maybe remove the usage?
+    // Actually, I removed the button that uses it.
+    // If I remove it from props, I must update DashboardLayout too.
+    // DashboardLayout passes `onOpenSettings={onOpenSettings}` to Sidebar.
+    // So I should keep it in props to avoid type error in DashboardLayout, or update DashboardLayout.
+    // Let's update DashboardLayout to NOT pass it to Sidebar if Sidebar doesn't need it.
+    // But for now, to fix lint "unused", I can just remove it from destructuring or keep it and suppress?
+    // Better: Remove it from Sidebar props and update DashboardLayout.
     sessions: ChatSession[];
     activeSessionId: string | null;
     onSelectSession: (sessionId: string) => void;
@@ -21,7 +29,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-    onOpenSettings,
     sessions,
     activeSessionId,
     onSelectSession,
@@ -56,8 +63,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <RandomMikuImage />
             </div>
 
-            {/* Bottom Actions */}
-            <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+            {/* Bottom Actions - Moved to NavigationRail */}
+            {/* <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
                 <button
                     onClick={onOpenSettings}
                     className="w-full flex items-center gap-3 p-2 rounded-xl text-slate-500 hover:bg-black/5 hover:text-slate-800 transition-all"
@@ -65,7 +72,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <Settings size={18} />
                     <span className="text-sm font-medium">Settings</span>
                 </button>
-            </div>
+            </div> */}
         </div>
     );
 };

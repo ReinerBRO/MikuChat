@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
+import NavigationRail from './NavigationRail';
+import MusicPlayer from './MusicPlayer';
 
 interface ChatSession {
     id: string;
@@ -17,9 +19,8 @@ interface DashboardLayoutProps {
     onSelectSession: (sessionId: string) => void;
     onNewChat: () => void;
     onDeleteSession: (sessionId: string) => void;
+    onLogout: () => void;
 }
-
-import MusicPlayer from './MusicPlayer';
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     children,
@@ -28,22 +29,46 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     activeSessionId,
     onSelectSession,
     onNewChat,
-    onDeleteSession
+    onDeleteSession,
+    onLogout
 }) => {
+    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'settings'>('chat');
+
+    const handleTabChange = (tab: 'chat' | 'music' | 'settings') => {
+        if (tab === 'settings') {
+            if (onOpenSettings) onOpenSettings();
+        } else {
+            setActiveTab(tab);
+        }
+    };
+
     return (
         <div className="flex h-screen p-4 gap-4">
-            <Sidebar
-                onOpenSettings={onOpenSettings}
-                sessions={sessions}
-                activeSessionId={activeSessionId}
-                onSelectSession={onSelectSession}
-                onNewChat={onNewChat}
-                onDeleteSession={onDeleteSession}
+            <NavigationRail
+                activeTab={activeTab}
+                onTabChange={handleTabChange}
+                onLogout={onLogout}
             />
-            <main className="flex-1 h-full min-w-0">
-                {children}
-            </main>
-            <MusicPlayer />
+
+            {/* Chat View */}
+            <div className={`contents ${activeTab === 'chat' ? '' : 'hidden'}`}>
+                <Sidebar
+                    sessions={sessions}
+                    activeSessionId={activeSessionId}
+                    onSelectSession={onSelectSession}
+                    onNewChat={onNewChat}
+                    onDeleteSession={onDeleteSession}
+                />
+                <main className="flex-1 h-full min-w-0">
+                    {children}
+                </main>
+            </div>
+
+            {/* Music View / Player */}
+            {/* When in music mode, this div takes up the space. When in chat mode, it's hidden/collapsed but MusicPlayer (mini) is fixed. */}
+            <div className={activeTab === 'music' ? 'flex-1 h-full min-w-0' : ''}>
+                <MusicPlayer viewMode={activeTab === 'music' ? 'full' : 'mini'} />
+            </div>
         </div>
     );
 };

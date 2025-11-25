@@ -188,6 +188,7 @@ function App() {
           onSelectSession={handleSelectSession}
           onNewChat={handleNewChat}
           onDeleteSession={handleDeleteSession}
+          onLogout={handleLogout}
         >
           <ChatInterface
             activeSessionId={activeSessionId}
