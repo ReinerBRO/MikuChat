@@ -1,3 +1,22 @@
+# Contributor
+<table>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/ReinerBRO">
+        <img src="https://github.com/ReinerBRO.png" width="80px;" /><br />
+        <sub><b>ReinerBRO</b></sub>
+      </a>
+    </td>
+    <td align="center">
+      <a href="https://github.com/JWLLQ">
+        <img src="https://github.com/JWLLQ.png" width="80px;" /><br />
+        <sub><b>JWLLQ</b></sub>
+      </a>
+    </td>
+  </tr>
+</table>
+
+
 # MikuChat 🎵
 
 ![MikuChat](./mikuchat.png)
