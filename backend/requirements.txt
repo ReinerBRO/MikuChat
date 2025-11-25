@@ -1,7 +1,6 @@
 fastapi
 uvicorn
-pydantic
 python-multipart
+pydantic
 dashscope
-python-dotenv
-requests
+yt-dlp

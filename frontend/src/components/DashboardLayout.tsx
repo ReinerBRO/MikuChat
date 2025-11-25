@@ -19,6 +19,8 @@ interface DashboardLayoutProps {
     onDeleteSession: (sessionId: string) => void;
 }
 
+import MusicPlayer from './MusicPlayer';
+
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     children,
     onOpenSettings,
@@ -41,6 +43,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <main className="flex-1 h-full min-w-0">
                 {children}
             </main>
+            <MusicPlayer />
         </div>
     );
 };
