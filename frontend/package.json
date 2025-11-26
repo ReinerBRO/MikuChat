@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "pixi-live2d-display": "^0.4.0",
-    "pixi.js": "^7.4.3",
+    "pixi.js": "^6.5.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

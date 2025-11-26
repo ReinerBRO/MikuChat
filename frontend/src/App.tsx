@@ -19,6 +19,9 @@ function App() {
   const [currentUser, setCurrentUser] = useState<string>('');
   const [theme, setTheme] = useState(() => localStorage.getItem('miku_theme') || 'light');
   const [bgOpacity, setBgOpacity] = useState(() => parseInt(localStorage.getItem('miku_bg_opacity') || '50'));
+  const [showAvatar, setShowAvatar] = useState(() => localStorage.getItem('miku_show_avatar') !== 'false');
+  const [avatarMode, setAvatarMode] = useState<'simple' | 'live2d'>(() => (localStorage.getItem('miku_avatar_mode') as 'simple' | 'live2d') || 'simple');
+  const [live2dModelUrl, setLive2dModelUrl] = useState(() => localStorage.getItem('miku_live2d_model_url') || '/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -38,7 +41,18 @@ function App() {
     // Save settings
     localStorage.setItem('miku_theme', theme);
     localStorage.setItem('miku_bg_opacity', bgOpacity.toString());
-  }, [theme, bgOpacity]);
+    localStorage.setItem('miku_show_avatar', showAvatar.toString());
+    localStorage.setItem('miku_avatar_mode', avatarMode);
+    localStorage.setItem('miku_live2d_model_url', live2dModelUrl);
+  }, [theme, bgOpacity, showAvatar, avatarMode, live2dModelUrl]);
+
+  // Auto-migrate to local model if using the old broken CDN
+  useEffect(() => {
+    const oldUrl = 'https://cdn.jsdelivr.net/gh/evrstr/live2d-widget-models/live2d_evrstr/miku/model.json';
+    if (live2dModelUrl === oldUrl) {
+      setLive2dModelUrl('/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json');
+    }
+  }, [live2dModelUrl]);
 
   useEffect(() => {
     // Check for auto-login
@@ -194,6 +208,9 @@ function App() {
             activeSessionId={activeSessionId}
             onSessionCreated={handleSessionCreated}
             currentUser={currentUser}
+            showAvatar={showAvatar}
+            avatarMode={avatarMode}
+            live2dModelUrl={live2dModelUrl}
           />
         </DashboardLayout>
       </div>
@@ -208,6 +225,12 @@ function App() {
         currentUser={currentUser}
         onUsernameChange={handleUsernameChange}
         onLogout={handleLogout}
+        showAvatar={showAvatar}
+        onShowAvatarChange={setShowAvatar}
+        avatarMode={avatarMode}
+        onAvatarModeChange={setAvatarMode}
+        live2dModelUrl={live2dModelUrl}
+        onLive2dModelUrlChange={setLive2dModelUrl}
       />
     </div>
   );

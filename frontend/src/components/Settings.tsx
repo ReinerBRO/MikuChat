@@ -11,6 +11,12 @@ interface SettingsProps {
     currentUser: string;
     onUsernameChange: (newUsername: string) => void;
     onLogout: () => void;
+    showAvatar: boolean;
+    onShowAvatarChange: (show: boolean) => void;
+    avatarMode: 'simple' | 'live2d';
+    onAvatarModeChange: (mode: 'simple' | 'live2d') => void;
+    live2dModelUrl: string;
+    onLive2dModelUrlChange: (url: string) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({
@@ -22,7 +28,13 @@ const Settings: React.FC<SettingsProps> = ({
     onOpacityChange,
     currentUser,
     onUsernameChange,
-    onLogout
+    onLogout,
+    showAvatar,
+    onShowAvatarChange,
+    avatarMode,
+    onAvatarModeChange,
+    live2dModelUrl,
+    onLive2dModelUrlChange
 }) => {
     const [editingUsername, setEditingUsername] = useState(false);
     const [newUsername, setNewUsername] = useState(currentUser);
@@ -174,6 +186,91 @@ const Settings: React.FC<SettingsProps> = ({
                             <span>Solid</span>
                         </div>
                     </div>
+
+                    {/* Avatar Visibility */}
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
+                            Show Avatar
+                        </label>
+                        <button
+                            onClick={() => onShowAvatarChange(!showAvatar)}
+                            className={`w-12 h-6 rounded-full transition-colors relative ${showAvatar ? 'bg-miku' : 'bg-slate-300 dark:bg-slate-600'
+                                }`}
+                        >
+                            <div
+                                className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${showAvatar ? 'translate-x-6' : 'translate-x-0'
+                                    }`}
+                            />
+                        </button>
+                    </div>
+
+                    {/* Avatar Mode */}
+                    {showAvatar && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
+                                Avatar Style
+                            </label>
+                            <div className="flex bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1">
+                                <button
+                                    onClick={() => onAvatarModeChange('simple')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${avatarMode === 'simple'
+                                        ? 'bg-white dark:bg-slate-600 text-miku shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                        }`}
+                                >
+                                    Simple
+                                </button>
+                                <button
+                                    onClick={() => onAvatarModeChange('live2d')}
+                                    className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${avatarMode === 'live2d'
+                                        ? 'bg-white dark:bg-slate-600 text-miku shadow-sm'
+                                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
+                                        }`}
+                                >
+                                    Live2D
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Custom Live2D Model URL */}
+                    {showAvatar && avatarMode === 'live2d' && (
+                        <div>
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
+                                Live2D Model URL
+                            </label>
+                            <input
+                                type="text"
+                                value={live2dModelUrl}
+                                onChange={(e) => onLive2dModelUrlChange(e.target.value)}
+                                placeholder="https://..."
+                                className="w-full px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-700/50 border-none focus:ring-2 focus:ring-miku text-slate-700 dark:text-slate-200 text-sm mb-2"
+                            />
+                            <div className="flex gap-2 overflow-x-auto pb-2">
+                                <button
+                                    onClick={() => onLive2dModelUrlChange('/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json')}
+                                    className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-miku hover:text-white transition-colors whitespace-nowrap"
+                                >
+                                    Miku (Local)
+                                </button>
+                                <button
+                                    onClick={() => onLive2dModelUrlChange('https://raw.githubusercontent.com/guansss/pixi-live2d-display/master/test/assets/haru/haru_greeter_t03.model3.json')}
+                                    className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-miku hover:text-white transition-colors whitespace-nowrap"
+                                >
+                                    Haru (Test)
+                                </button>
+                                <button
+                                    onClick={() => onLive2dModelUrlChange('https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.model.json')}
+                                    className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-miku hover:text-white transition-colors whitespace-nowrap"
+                                >
+                                    Shizuku
+                                </button>
+                            </div>
+                            <p className="text-xs text-slate-400">
+                                Enter a direct link to a model.json or model3.json file.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">

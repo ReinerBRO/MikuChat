@@ -33,6 +33,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onLogout
 }) => {
     const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'settings'>('chat');
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
+        localStorage.getItem('miku_sidebar_collapsed') === 'true'
+    );
 
     const handleTabChange = (tab: 'chat' | 'music' | 'settings') => {
         if (tab === 'settings') {
@@ -40,6 +43,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         } else {
             setActiveTab(tab);
         }
+    };
+
+    const handleToggleSidebar = () => {
+        const newState = !sidebarCollapsed;
+        setSidebarCollapsed(newState);
+        localStorage.setItem('miku_sidebar_collapsed', newState.toString());
     };
 
     return (
@@ -58,6 +67,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     onSelectSession={onSelectSession}
                     onNewChat={onNewChat}
                     onDeleteSession={onDeleteSession}
+                    collapsed={sidebarCollapsed}
+                    onToggleCollapse={handleToggleSidebar}
                 />
                 <main className="flex-1 h-full min-w-0">
                     {children}
