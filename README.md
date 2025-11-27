@@ -34,6 +34,18 @@ Readme由AI生成，描述有些夸张，不用在意， 有空就会更新各�
 - **多主题支持**：内置 Light、Dark 和 Cyberpunk 三种主题，随心切换。
 - **Live2D 集成**：支持 Live2D 模型，Miku 可以在蒸汽波风格的 3D 空间中与你互动，支持实时缩放调整。
 
+### 📰 Miku News
+- **实时资讯**：自动抓取 Piapro 官方博客 RSS，为你推送最新的 Miku 相关新闻。
+- **智能分类**：自动识别新闻类别（演唱会、新曲、周边等），并配以精美图标。
+- **沉浸式阅读**：精美的新闻卡片设计，支持查看大图和原文跳转。
+
+![Miku News Interface](./mikunews.png)
+
+### 💃 增强型 Avatar 面板
+- **自由缩放**：支持实时调整 Miku 的大小，找到最适合你的比例。
+- **沉浸背景**：Avatar 专属的 Vaporwave 风格 3D 动态背景。
+- **灵活布局**：支持折叠面板，专注于对话或欣赏 Miku。
+
 ![Chat Interface](./1.png)
 ![Live2D Avatar](./screenshot_live2d.png)
 

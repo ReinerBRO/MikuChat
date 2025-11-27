@@ -11,6 +11,7 @@ import asyncio
 from llm_service import LLMService
 from chat_manager import ChatManager, ChatSession
 from image_service import ImageService
+from news_service import NewsService
 
 app = FastAPI(title="MikuChat API", description="Backend for MikuChat WebUI")
 
@@ -35,6 +36,7 @@ app.mount("/music", StaticFiles(directory="music"), name="music")
 llm_service = LLMService()
 chat_manager = ChatManager()
 image_service = ImageService()
+news_service = NewsService()
 
 USER_CONFIG_FILE = "user_config.json"
 
@@ -385,3 +387,16 @@ def get_random_miku_image():
             "error": "Failed to fetch image",
             "image_url": None
         }
+
+# News Endpoint
+@app.get("/api/news")
+async def get_news():
+    """Get latest Miku news from Bilibili"""
+    try:
+        # Run in executor to avoid blocking
+        loop = asyncio.get_event_loop()
+        news = await loop.run_in_executor(None, news_service.get_latest_news)
+        return {"news": news}
+    except Exception as e:
+        print(f"News API error: {e}")
+        return {"news": []}

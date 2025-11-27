@@ -1,10 +1,10 @@
 import React from 'react';
-import { MessageCircle, Music, Settings, LogOut } from 'lucide-react';
+import { MessageCircle, Music, Settings, LogOut, Newspaper } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavigationRailProps {
-    activeTab: 'chat' | 'music' | 'settings';
-    onTabChange: (tab: 'chat' | 'music' | 'settings') => void;
+    activeTab: 'chat' | 'music' | 'news' | 'settings';
+    onTabChange: (tab: 'chat' | 'music' | 'news' | 'settings') => void;
     onLogout: () => void;
 }
 
@@ -12,6 +12,7 @@ const NavigationRail: React.FC<NavigationRailProps> = ({ activeTab, onTabChange,
     const navItems = [
         { id: 'chat', icon: MessageCircle, label: 'Chat' },
         { id: 'music', icon: Music, label: 'Music' },
+        { id: 'news', icon: Newspaper, label: 'News' },
         { id: 'settings', icon: Settings, label: 'Settings' },
     ];
 

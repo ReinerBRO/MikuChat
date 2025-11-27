@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './Sidebar';
 import NavigationRail from './NavigationRail';
 import MusicPlayer from './MusicPlayer';
+import MikuNews from './MikuNews';
 
 interface ChatSession {
     id: string;
@@ -32,12 +33,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onDeleteSession,
     onLogout
 }) => {
-    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'settings'>('chat');
+    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings'>('chat');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
         localStorage.getItem('miku_sidebar_collapsed') === 'true'
     );
 
-    const handleTabChange = (tab: 'chat' | 'music' | 'settings') => {
+    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings') => {
         if (tab === 'settings') {
             if (onOpenSettings) onOpenSettings();
         } else {
@@ -74,6 +75,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     {children}
                 </main>
             </div>
+
+            {/* News View */}
+            {activeTab === 'news' && (
+                <div className="flex-1 h-full min-w-0">
+                    <MikuNews />
+                </div>
+            )}
 
             {/* Music View / Player */}
             {/* When in music mode, this div takes up the space. When in chat mode, it's hidden/collapsed but MusicPlayer (mini) is fixed. */}

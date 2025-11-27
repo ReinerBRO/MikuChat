@@ -4,3 +4,4 @@ python-multipart
 pydantic
 dashscope
 yt-dlp
+requests
