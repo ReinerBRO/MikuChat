@@ -24,14 +24,16 @@ const categories = [
 
 export default function MikuNews() {
     const [selectedCategory, setSelectedCategory] = useState('全部');
+    const [newsSource, setNewsSource] = useState('all');
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchNews = async () => {
+            setLoading(true);
             try {
-                const response = await fetch('http://localhost:8000/api/news');
+                const response = await fetch(`http://localhost:8000/api/news?source=${newsSource}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch news');
                 }
@@ -46,7 +48,7 @@ export default function MikuNews() {
         };
 
         fetchNews();
-    }, []);
+    }, [newsSource]);
 
     const filteredNews = selectedCategory === '全部'
         ? news
@@ -66,14 +68,42 @@ export default function MikuNews() {
         <div className="h-full flex flex-col bg-tech-bg">
             {/* Header */}
             <header className="glass-panel rounded-2xl p-6 mb-6 shrink-0">
-                <div className="flex items-center gap-3 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-miku to-blue-500 flex items-center justify-center">
-                        <Newspaper className="w-6 h-6 text-white" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-miku to-blue-500 flex items-center justify-center shadow-lg shadow-miku/20">
+                            <Newspaper className="w-6 h-6 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-2xl font-display font-bold text-theme-text flex items-center gap-2">
+                                Miku News
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-miku/10 text-miku border border-miku/20">Beta</span>
+                            </h1>
+                            <p className="text-sm text-theme-text-muted mb-2">初音未来最新资讯</p>
+
+                            {/* Source Selector - Moved here for visibility */}
+                            <div className="flex items-center gap-2 bg-gray-100/50 dark:bg-gray-800/50 rounded-lg p-1 w-fit">
+                                {[
+                                    { id: 'all', label: '全部' },
+                                    { id: 'piapro', label: 'Piapro' },
+                                    { id: 'google', label: 'Google' }
+                                ].map(source => (
+                                    <button
+                                        key={source.id}
+                                        onClick={() => setNewsSource(source.id)}
+                                        className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${newsSource === source.id
+                                            ? 'bg-miku text-white shadow-sm'
+                                            : 'text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
+                                            }`}
+                                    >
+                                        {source.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h1 className="text-2xl font-display font-bold text-theme-text">Miku News</h1>
-                        <p className="text-sm text-theme-text-muted">初音未来最新资讯</p>
-                    </div>
+
+                    {/* Source Selector */}
+
                 </div>
 
                 {/* Category Filter */}
@@ -107,7 +137,7 @@ export default function MikuNews() {
             </header>
 
             {/* News List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4">
+            <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2 pb-20">
                 {loading ? (
                     <div className="flex flex-col items-center justify-center h-64 text-miku">
                         <Loader2 className="w-8 h-8 animate-spin mb-2" />
@@ -134,7 +164,7 @@ export default function MikuNews() {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
-                                className="glass-panel rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group"
+                                className="glass-panel rounded-2xl overflow-hidden hover:shadow-lg transition-shadow group mr-2"
                             >
                                 <div className="flex flex-col md:flex-row">
                                     {/* Thumbnail */}
@@ -170,7 +200,7 @@ export default function MikuNews() {
                                         </h2>
 
                                         {/* Content Preview */}
-                                        <p className="text-sm text-theme-text-muted mb-4 line-clamp-2">
+                                        <p className="text-sm text-theme-text-muted mb-4 line-clamp-2 break-words">
                                             {item.content}
                                         </p>
 

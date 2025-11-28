@@ -390,12 +390,12 @@ def get_random_miku_image():
 
 # News Endpoint
 @app.get("/api/news")
-async def get_news():
-    """Get latest Miku news from Bilibili"""
+async def get_news(source: str = "all"):
+    """Get latest Miku news from specified source"""
     try:
         # Run in executor to avoid blocking
         loop = asyncio.get_event_loop()
-        news = await loop.run_in_executor(None, news_service.get_latest_news)
+        news = await loop.run_in_executor(None, lambda: news_service.get_latest_news(source))
         return {"news": news}
     except Exception as e:
         print(f"News API error: {e}")

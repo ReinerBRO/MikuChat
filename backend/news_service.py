@@ -28,7 +28,82 @@ class NewsService:
                 return category
         return "社区动态"  # Default category
 
-    def get_latest_news(self):
+    def get_google_news(self):
+        """Fetch news from Google News RSS"""
+        url = "https://news.google.com/rss/search?q=%E5%88%9D%E9%9F%B3%E6%9C%AA%E6%9D%A5&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+        
+        try:
+            response = requests.get(url, headers=self.headers, timeout=10)
+            if response.status_code != 200:
+                return []
+                
+            content = response.text
+            import re
+            import html
+            
+            items = re.findall(r'<item>(.*?)</item>', content, re.DOTALL)
+            news_items = []
+            
+            for item in items:
+                try:
+                    title_match = re.search(r'<title>(.*?)</title>', item)
+                    title = title_match.group(1) if title_match else "No Title"
+                    
+                    link_match = re.search(r'<link>(.*?)</link>', item)
+                    link = link_match.group(1) if link_match else ""
+                    
+                    date_match = re.search(r'<pubDate>(.*?)</pubDate>', item)
+                    pub_date = date_match.group(1) if date_match else ""
+                    
+                    # Format date: Tue, 05 Aug 2025 07:00:00 GMT -> 2025-08-05 07:00
+                    try:
+                        dt = datetime.strptime(pub_date, "%a, %d %b %Y %H:%M:%S %Z")
+                        pub_date = dt.strftime("%Y-%m-%d %H:%M")
+                    except:
+                        pass
+                        
+                    # Google News doesn't usually have images in RSS, but we can try to find description
+                    desc_match = re.search(r'<description>(.*?)</description>', item, re.DOTALL)
+                    desc = desc_match.group(1) if desc_match else ""
+                    
+                    # Unescape HTML entities (fixes &lt;a href=... issues)
+                    desc = html.unescape(desc)
+                    # Remove HTML tags
+                    desc_clean = re.sub(r'<[^>]+>', '', desc).strip()
+                    
+                    news_items.append({
+                        "id": link,
+                        "title": title,
+                        "content": desc_clean[:200] + "...",
+                        "category": self._classify_news(title),
+                        "source": "Google News",
+                        "publishTime": pub_date,
+                        "url": link,
+                        "thumbnail": None # Google RSS doesn't provide good thumbnails
+                    })
+                except:
+                    continue
+                    
+            return news_items
+        except Exception as e:
+            print(f"Google News fetch error: {e}")
+            return []
+
+    def get_latest_news(self, source='all'):
+        """Fetch latest news from specified source"""
+        news = []
+        
+        if source in ['all', 'piapro']:
+            news.extend(self._get_piapro_news())
+            
+        if source in ['all', 'google']:
+            news.extend(self.get_google_news())
+            
+        # Sort by date (newest first)
+        news.sort(key=lambda x: x['publishTime'], reverse=True)
+        return news
+
+    def _get_piapro_news(self):
         """Fetch latest news from Piapro Blog RSS"""
         url = "https://blog.piapro.net/feed"
         
@@ -82,8 +157,6 @@ class NewsService:
                     if thumbnail and ('s.w.org' in thumbnail or 'emoji' in thumbnail):
                         thumbnail = None
                         
-                    # Fallback to finding image in the article content if possible (not available in RSS usually)
-                    
                     news_items.append({
                         "id": link, # Use link as ID
                         "title": title,
