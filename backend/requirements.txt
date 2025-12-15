@@ -5,3 +5,4 @@ pydantic
 dashscope
 yt-dlp
 requests
+python-dotenv

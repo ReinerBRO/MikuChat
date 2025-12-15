@@ -28,10 +28,28 @@ kill_port 5173
 # Start Backend
 echo "Starting Backend..."
 cd backend
-# Check if virtual environment is active or needs to be used
-# Assuming the user's environment is already set up or using the system python
-# If a specific env is needed, it should be activated here. 
-# Based on previous context, user was running: python -m uvicorn main:app --reload --port 8000
+
+# Check for python command
+if command -v python3 &>/dev/null; then
+    PYTHON_CMD=python3
+else
+    PYTHON_CMD=python
+fi
+
+# Setup/Activate venv
+if [ ! -d "venv" ]; then
+    echo "Creating virtual environment..."
+    $PYTHON_CMD -m venv venv
+fi
+
+# Activate venv
+source venv/bin/activate
+
+# Install dependencies
+echo "Installing dependencies..."
+pip install -r requirements.txt
+
+# Run backend
 python -m uvicorn main:app --reload --port 8000 &
 cd ..
 

@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import NavigationRail from './NavigationRail';
 import MusicPlayer from './MusicPlayer';
 import MikuNews from './MikuNews';
+import Miku3D from './Miku3D';
 
 interface ChatSession {
     id: string;
@@ -33,12 +34,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onDeleteSession,
     onLogout
 }) => {
-    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings'>('chat');
+    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings' | '3d'>('chat');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
         localStorage.getItem('miku_sidebar_collapsed') === 'true'
     );
 
-    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings') => {
+    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings' | '3d') => {
         if (tab === 'settings') {
             if (onOpenSettings) onOpenSettings();
         } else {
@@ -80,6 +81,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {activeTab === 'news' && (
                 <div className="flex-1 h-full min-w-0">
                     <MikuNews />
+                </div>
+            )}
+
+            {/* 3D View */}
+            {activeTab === '3d' && (
+                <div className="flex-1 h-full min-w-0">
+                    <Miku3D />
                 </div>
             )}
 

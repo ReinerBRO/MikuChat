@@ -1,18 +1,19 @@
 import React from 'react';
-import { MessageCircle, Music, Settings, LogOut, Newspaper } from 'lucide-react';
+import { MessageSquare, Music, Settings, LogOut, Newspaper, Box } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavigationRailProps {
-    activeTab: 'chat' | 'music' | 'news' | 'settings';
-    onTabChange: (tab: 'chat' | 'music' | 'news' | 'settings') => void;
+    activeTab: 'chat' | 'news' | 'music' | 'settings' | '3d';
+    onTabChange: (tab: 'chat' | 'news' | 'music' | 'settings' | '3d') => void;
     onLogout: () => void;
 }
 
-const NavigationRail: React.FC<NavigationRailProps> = ({ activeTab, onTabChange, onLogout }) => {
+export default function NavigationRail({ activeTab, onTabChange, onLogout }: NavigationRailProps) {
     const navItems = [
-        { id: 'chat', icon: MessageCircle, label: 'Chat' },
-        { id: 'music', icon: Music, label: 'Music' },
+        { id: 'chat', icon: MessageSquare, label: 'Chat' },
         { id: 'news', icon: Newspaper, label: 'News' },
+        { id: 'music', icon: Music, label: 'Music' },
+        { id: '3d', icon: Box, label: '3D Miku' },
         { id: 'settings', icon: Settings, label: 'Settings' },
     ];
 
@@ -30,8 +31,8 @@ const NavigationRail: React.FC<NavigationRailProps> = ({ activeTab, onTabChange,
                         key={item.id}
                         onClick={() => onTabChange(item.id as any)}
                         className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition-all group ${activeTab === item.id
-                                ? 'bg-miku text-white shadow-lg shadow-miku/30'
-                                : 'text-slate-400 hover:bg-white/50 hover:text-miku-dark'
+                            ? 'bg-miku text-white shadow-lg shadow-miku/30'
+                            : 'text-slate-400 hover:bg-white/50 hover:text-miku-dark'
                             }`}
                         title={item.label}
                     >
@@ -56,6 +57,4 @@ const NavigationRail: React.FC<NavigationRailProps> = ({ activeTab, onTabChange,
             </button>
         </div>
     );
-};
-
-export default NavigationRail;
+}
