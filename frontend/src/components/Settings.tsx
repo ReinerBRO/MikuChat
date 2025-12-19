@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Moon, Sun, Monitor, Sliders, User, LogOut } from 'lucide-react';
+import { useGame } from '../context/GameContext';
 
 interface SettingsProps {
     isOpen: boolean;
@@ -38,10 +39,12 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
     const [editingUsername, setEditingUsername] = useState(false);
     const [newUsername, setNewUsername] = useState(currentUser);
+    const { affinity, negiCoins, mood } = useGame();
 
     useEffect(() => {
         setNewUsername(currentUser);
     }, [currentUser]);
+
     const handleSaveUsername = () => {
         if (newUsername.trim()) {
             onUsernameChange(newUsername.trim());
@@ -52,6 +55,13 @@ const Settings: React.FC<SettingsProps> = ({
     const handleCancelEdit = () => {
         setNewUsername(currentUser);
         setEditingUsername(false);
+    };
+
+    const handleResetGame = () => {
+        if (confirm("Are you sure you want to reset your relationship with Miku? This cannot be undone!")) {
+            localStorage.removeItem('miku_game_state');
+            window.location.reload();
+        }
     };
 
     if (!isOpen) return null;
@@ -125,6 +135,25 @@ const Settings: React.FC<SettingsProps> = ({
                             >
                                 <LogOut size={16} />
                                 Logout
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Game Data - New Section */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
+                            Game Data
+                        </label>
+                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                            <div className="text-xs text-slate-500">
+                                <p>Affinity: {affinity}</p>
+                                <p>Coins: {negiCoins}</p>
+                            </div>
+                            <button
+                                onClick={handleResetGame}
+                                className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
+                            >
+                                Reset Progress
                             </button>
                         </div>
                     </div>

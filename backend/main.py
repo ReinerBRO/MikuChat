@@ -35,10 +35,37 @@ app.mount("/music", StaticFiles(directory="music"), name="music")
 
 llm_service = LLMService()
 chat_manager = ChatManager()
-image_service = ImageService()
-news_service = NewsService()
+from tts_service import generate_tts
 
-USER_CONFIG_FILE = "user_config.json"
+# ... imports ...
+
+# Mount static directories
+os.makedirs("music", exist_ok=True)
+app.mount("/music", StaticFiles(directory="music"), name="music")
+
+os.makedirs("static/audio", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+# ... (rest of the file) ...
+
+# TTS Endpoint
+class TTSRequest(BaseModel):
+    text: str
+
+@app.post("/api/tts")
+async def tts_endpoint(request: TTSRequest):
+    """Generate TTS audio for text"""
+    try:
+        audio_url = await generate_tts(request.text)
+        return {"audio_url": audio_url}
+    except Exception as e:
+        print(f"TTS Error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 class ChatRequest(BaseModel):
     text: str
@@ -369,9 +396,17 @@ async def chat(
         "timestamp": timestamp
     }, username)
     
+    # Generate TTS audio
+    audio_url = None
+    try:
+        audio_url = await generate_tts(response)
+    except Exception as e:
+        print(f"Failed to generate TTS for chat response: {e}")
+    
     return {
         "response": response,
-        "session_id": session_id
+        "session_id": session_id,
+        "audio_url": audio_url
     }
 
 # Random Miku Image Endpoint

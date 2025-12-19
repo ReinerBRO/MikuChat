@@ -4,12 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedAvatar from './AnimatedAvatar';
 import Live2DAvatar from './Live2DAvatar';
 import ErrorBoundary from './ErrorBoundary';
+import { useGame } from '../context/GameContext';
 
 interface Message {
     id: string;
     text: string;
     sender: 'user' | 'miku';
     image?: string;
+    audioUrl?: string; // New field for TTS
     timestamp: Date;
 }
 
@@ -30,6 +32,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     avatarMode = 'simple',
     live2dModelUrl = '/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json'
 }) => {
+    const { triggerInteraction } = useGame();
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
         text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
@@ -113,6 +116,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const handleSendMessage = async () => {
         if (!inputText.trim() && !selectedImage) return;
 
+        // Trigger game interaction (chat)
+        triggerInteraction('chat');
+
         const newMessage: Message = {
             id: Date.now().toString(),
             text: inputText,
@@ -140,30 +146,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 formData.append('session_id', activeSessionId);
             }
 
-            // Prepare history (last 3 rounds = last 6 messages, excluding the current new one)
-            const historyMessages = messages
-                .slice(-6) // Get last 6 messages
-                .filter(msg => !msg.image) // Filter out messages with images for now (text-only history)
-                .map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'model',
-                    content: msg.text
-                }));
-
-            formData.append('history', JSON.stringify(historyMessages));
-
             const response = await fetch('http://localhost:8000/api/chat', {
                 method: 'POST',
                 body: formData,
             });
 
             if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
+                throw new Error('Failed to send message');
             }
 
-            const data = await response.json();
-
-            // If a new session was created, notify parent
-            if (data.session_id && !activeSessionId) {
+            const data = await response.json(); if (data.session_id && !activeSessionId) {
                 onSessionCreated(data.session_id);
             }
 
@@ -172,9 +164,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 text: data.response,
                 sender: 'miku',
                 timestamp: new Date(),
+                audioUrl: data.audio_url
             };
 
             setMessages(prev => [...prev, mikuReply]);
+
+            // Auto-play audio if available
+            if (data.audio_url) {
+                const audio = new Audio(`http://localhost:8000${data.audio_url}`);
+                audio.play().catch(e => console.error("Audio playback error:", e));
+            }
         } catch (error) {
             console.error("Error sending message:", error);
             const errorMessage: Message = {
@@ -233,9 +232,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             {/* 3D Grid Floor - Less dense */}
                             <div className="absolute inset-0 opacity-15" style={{
                                 background: `
-                                    linear-gradient(0deg, transparent 24%, rgba(93, 217, 210, 0.3) 25%, rgba(93, 217, 210, 0.3) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.3) 75%, rgba(93, 217, 210, 0.3) 76%, transparent 77%, transparent),
-                                    linear-gradient(90deg, transparent 24%, rgba(93, 217, 210, 0.25) 25%, rgba(93, 217, 210, 0.25) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.25) 75%, rgba(93, 217, 210, 0.25) 76%, transparent 77%, transparent)
-                                `,
+                                linear-gradient(0deg, transparent 24%, rgba(93, 217, 210, 0.3) 25%, rgba(93, 217, 210, 0.3) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.3) 75%, rgba(93, 217, 210, 0.3) 76%, transparent 77%, transparent),
+                                linear-gradient(90deg, transparent 24%, rgba(93, 217, 210, 0.25) 25%, rgba(93, 217, 210, 0.25) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.25) 75%, rgba(93, 217, 210, 0.25) 76%, transparent 77%, transparent)
+                            `,
                                 backgroundSize: '80px 80px',
                                 transform: 'perspective(400px) rotateX(60deg)',
                                 transformOrigin: 'center bottom',
@@ -246,11 +245,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             {/* Pixel Stars - Lighter */}
                             <div className="absolute inset-0 opacity-30" style={{
                                 backgroundImage: `
-                                    radial-gradient(2px 2px at 20% 30%, rgba(93, 217, 210, 0.4), transparent),
-                                    radial-gradient(1px 1px at 60% 70%, rgba(93, 217, 210, 0.3), transparent),
-                                    radial-gradient(1px 1px at 80% 20%, rgba(160, 240, 237, 0.4), transparent),
-                                    radial-gradient(2px 2px at 40% 80%, rgba(93, 217, 210, 0.35), transparent)
-                                `,
+                                radial-gradient(2px 2px at 20% 30%, rgba(93, 217, 210, 0.4), transparent),
+                                radial-gradient(1px 1px at 60% 70%, rgba(93, 217, 210, 0.3), transparent),
+                                radial-gradient(1px 1px at 80% 20%, rgba(160, 240, 237, 0.4), transparent),
+                                radial-gradient(2px 2px at 40% 80%, rgba(93, 217, 210, 0.35), transparent)
+                            `,
                                 backgroundSize: '150px 150px, 200px 200px, 180px 180px, 160px 160px',
                                 animation: 'twinkle 3s ease-in-out infinite'
                             }}></div>

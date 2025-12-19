@@ -4,6 +4,10 @@ import NavigationRail from './NavigationRail';
 import MusicPlayer from './MusicPlayer';
 import MikuNews from './MikuNews';
 import Miku3D from './Miku3D';
+import StatusPanel from './StatusPanel';
+import NotificationOverlay from './NotificationOverlay';
+import Shop from './Shop';
+
 
 interface ChatSession {
     id: string;
@@ -34,12 +38,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onDeleteSession,
     onLogout
 }) => {
-    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings' | '3d'>('chat');
+    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop'>('chat');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
         localStorage.getItem('miku_sidebar_collapsed') === 'true'
     );
 
-    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings' | '3d') => {
+    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop') => {
         if (tab === 'settings') {
             if (onOpenSettings) onOpenSettings();
         } else {
@@ -60,6 +64,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                 onTabChange={handleTabChange}
                 onLogout={onLogout}
             />
+
+            {/* Status Panel (Floating) */}
+            <div className="absolute top-6 right-6 z-50">
+                <StatusPanel />
+            </div>
+            <NotificationOverlay />
 
             {/* Chat View */}
             <div className={`contents ${activeTab === 'chat' ? '' : 'hidden'}`}>
@@ -88,6 +98,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             {activeTab === '3d' && (
                 <div className="flex-1 h-full min-w-0">
                     <Miku3D />
+                </div>
+            )}
+
+            {/* Shop View */}
+            {activeTab === 'shop' && (
+                <div className="flex-1 h-full min-w-0">
+                    <Shop />
                 </div>
             )}
 

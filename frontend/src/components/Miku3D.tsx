@@ -3,6 +3,7 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { useGLTF, useAnimations, OrbitControls, ContactShadows, Html, useProgress } from '@react-three/drei';
 import * as THREE from 'three';
 import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { useGame } from '../context/GameContext';
 
 function Loader() {
     const { progress } = useProgress();
@@ -87,6 +88,7 @@ function CameraSetup({ controlsRef }: { controlsRef: any }) {
 }
 
 export default function Miku3D() {
+    const { triggerInteraction } = useGame(); // Hook
     const [animations, setAnimations] = useState<string[]>([]);
     const [currentAnimation, setCurrentAnimation] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -97,9 +99,15 @@ export default function Miku3D() {
         setResetKey(prev => prev + 1);
     };
 
+    const playAnimation = (anim: string) => {
+        setCurrentAnimation(anim);
+        triggerInteraction('touch'); // Treat animation play as interaction
+    };
+
     return (
         <div className="w-full h-full relative bg-gradient-to-br from-miku/5 to-blue-50 dark:from-gray-900 dark:to-gray-800 rounded-2xl overflow-hidden min-h-[500px] border border-white/20 shadow-inner">
             {error ? (
+                // ... error display
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70 gap-4">
                     <AlertCircle className="w-12 h-12 text-red-400" />
                     <p>Failed to load 3D model</p>
@@ -167,7 +175,7 @@ export default function Miku3D() {
                         animations.map(anim => (
                             <button
                                 key={anim}
-                                onClick={() => setCurrentAnimation(anim)}
+                                onClick={() => playAnimation(anim)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${currentAnimation === anim
                                     ? 'bg-miku text-white shadow-lg shadow-miku/30'
                                     : 'bg-white/10 text-white hover:bg-white/20'
