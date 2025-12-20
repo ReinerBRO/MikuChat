@@ -13,14 +13,22 @@ from chat_manager import ChatManager, ChatSession
 from image_service import ImageService
 from news_service import NewsService
 
+from tts_service import generate_tts, init_gsv
+
 app = FastAPI(title="MikuChat API", description="Backend for MikuChat WebUI")
 
-# CORS Configuration
-origins = [
-    "http://localhost:5173",  # Vite default port
-    "http://127.0.0.1:5173",
-]
+# Startup event to warm up models
+@app.on_event("startup")
+async def startup_event():
+    print("Pre-warming GPT-SoVITS model...")
+    # This loads weights into VRAM/RAM so the first user message is fast
+    try:
+        init_gsv()
+    except Exception as e:
+        print(f"Failed to pre-warm TTS: {e}")
 
+# CORS Configuration
+origins = ["*"] # Be more permissive for local dev
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -29,25 +37,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount music directory
-os.makedirs("music", exist_ok=True)
-app.mount("/music", StaticFiles(directory="music"), name="music")
-
+# Services and logic
 llm_service = LLMService()
 chat_manager = ChatManager()
-from tts_service import generate_tts
+image_service = ImageService()
+news_service = NewsService()
 
-# ... imports ...
+USER_CONFIG_FILE = "user_config.json"
 
 # Mount static directories
 os.makedirs("music", exist_ok=True)
-app.mount("/music", StaticFiles(directory="music"), name="music")
-
 os.makedirs("static/audio", exist_ok=True)
+app.mount("/music", StaticFiles(directory="music"), name="music")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
-# ... (rest of the file) ...
 
 # TTS Endpoint
 class TTSRequest(BaseModel):
@@ -62,10 +66,6 @@ async def tts_endpoint(request: TTSRequest):
     except Exception as e:
         print(f"TTS Error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 class ChatRequest(BaseModel):
     text: str
@@ -102,7 +102,6 @@ async def update_user(config: UserConfig):
 
 from urllib.parse import quote
 
-# ... (existing imports)
 
 # Music Endpoints
 @app.get("/api/music")
@@ -352,22 +351,23 @@ async def chat(
     username: str = Form(...),
     session_id: Optional[str] = Form(None),
     image: Optional[UploadFile] = File(None),
-    history: str = Form("[]")
+    history: str = Form("[]"),
+    enable_tts: bool = Form(True)
 ):
     import json
     
+    current_username = username if username else "User"
+    
     # If no session_id, create a new session
     if not session_id:
-        # Try to get username from config, default to "User"
-        username = "User"
         if os.path.exists(USER_CONFIG_FILE):
             try:
                 with open(USER_CONFIG_FILE, "r") as f:
                     config = json.load(f)
-                    username = config.get("username", "User")
+                    current_username = config.get("username", current_username)
             except:
                 pass
-        session_id = await chat_manager.create_session(text, username)
+        session_id = await chat_manager.create_session(text, current_username)
     
     image_data = None
     if image:
@@ -389,19 +389,20 @@ async def chat(
         "role": "user",
         "content": text,
         "timestamp": timestamp
-    }, username)
+    }, current_username)
     chat_manager.add_message(session_id, {
         "role": "assistant",
         "content": response,
         "timestamp": timestamp
-    }, username)
+    }, current_username)
     
-    # Generate TTS audio
+    # Generate TTS audio if enabled
     audio_url = None
-    try:
-        audio_url = await generate_tts(response)
-    except Exception as e:
-        print(f"Failed to generate TTS for chat response: {e}")
+    if enable_tts:
+        try:
+            audio_url = await generate_tts(response)
+        except Exception as e:
+            print(f"Failed to generate TTS for chat response: {e}")
     
     return {
         "response": response,

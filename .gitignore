@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.env
+venv/
+.venv/
+env/
+backend/static/audio/*.wav
+
+# Node
+node_modules/
+dist/
+.DS_Store
+
+# Large Models (suggest using LFS or downloading separately)
+backend/gpt_sovits_core/
+backend/models/
+backend/sessions/*.json

@@ -29,28 +29,35 @@ kill_port 5173
 echo "Starting Backend..."
 cd backend
 
-# Check for python command
-if command -v python3 &>/dev/null; then
-    PYTHON_CMD=python3
+# Environment Selection
+CONDA_PYTHON="/Users/h1syu1/miniconda3/envs/mikuchat/bin/python"
+if [ -f "$CONDA_PYTHON" ]; then
+    echo "Using mikuchat conda environment..."
+    PYTHON_CMD="$CONDA_PYTHON"
+    PIP_CMD="/Users/h1syu1/miniconda3/envs/mikuchat/bin/pip"
 else
+    echo "Conda environment not found, falling back to local venv..."
+    if command -v python3 &>/dev/null; then
+        PYTHON_CMD_BASE=python3
+    else
+        PYTHON_CMD_BASE=python
+    fi
+    
+    if [ ! -d "venv" ]; then
+        echo "Creating virtual environment..."
+        $PYTHON_CMD_BASE -m venv venv
+    fi
+    source venv/bin/activate
     PYTHON_CMD=python
+    PIP_CMD=pip
 fi
 
-# Setup/Activate venv
-if [ ! -d "venv" ]; then
-    echo "Creating virtual environment..."
-    $PYTHON_CMD -m venv venv
-fi
-
-# Activate venv
-source venv/bin/activate
-
-# Install dependencies
-echo "Installing dependencies..."
-pip install -r requirements.txt
+# Install/Update dependencies
+echo "Ensuring dependencies are installed..."
+$PIP_CMD install -r requirements.txt
 
 # Run backend
-python -m uvicorn main:app --reload --port 8000 &
+$PYTHON_CMD -m uvicorn main:app --reload --port 8000 &
 cd ..
 
 # Start Frontend

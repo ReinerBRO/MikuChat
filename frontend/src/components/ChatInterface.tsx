@@ -35,7 +35,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const { triggerInteraction } = useGame();
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
-        text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
+        text: "Hello! I'm Miku. What shall we talk about today? 🎵",
         sender: 'miku',
         timestamp: new Date(),
     }]);
@@ -65,7 +65,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 // Show welcome message for new chat
                 setMessages([{
                     id: 'welcome',
-                    text: "Hello Master! I'm Miku. What shall we talk about today? 🎵",
+                    text: "Hello! I'm Miku. What shall we talk about today? 🎵",
                     sender: 'miku',
                     timestamp: new Date(),
                 }]);
@@ -97,6 +97,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const [inputText, setInputText] = useState('');
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [isTyping, setIsTyping] = useState(false);
+    const [ttsEnabled, setTtsEnabled] = useState(true);
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -140,6 +141,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             if (imageToSend) {
                 formData.append('image', imageToSend);
             }
+            formData.append('enable_tts', ttsEnabled.toString());
 
             // Add session_id if exists
             if (activeSessionId) {
@@ -456,9 +458,27 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl transition-colors"
+                        title="Upload Image"
                     >
                         <ImageIcon size={20} />
                     </button>
+                    <div className="relative group">
+                        <button
+                            onClick={() => setTtsEnabled(!ttsEnabled)}
+                            className={`p-3 rounded-xl transition-all ${ttsEnabled
+                                ? 'text-miku bg-miku/10 shadow-inner shadow-miku/10'
+                                : 'text-theme-muted hover:text-miku/70 hover:bg-miku/5'}`}
+                        >
+                            <Music size={20} className={ttsEnabled ? "animate-pulse" : ""} />
+                        </button>
+
+                        {/* Custom Tooltip */}
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-tech-panel/90 backdrop-blur-md border border-miku/30 text-miku text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg shadow-miku/10">
+                            {ttsEnabled ? "关闭语音输出" : "开启语音输出"}
+                            {/* Simple triangle arrow */}
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-miku/30"></div>
+                        </div>
+                    </div>
                     <input
                         type="file"
                         ref={fileInputRef}
