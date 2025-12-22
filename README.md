@@ -80,6 +80,43 @@
 3. **模型下载**
    项目需要 GPT-SoVITS 底模和 Miku 权重文件，请确保将其放置在 `backend/models/gpt_sovits/miku/weights/`。
 
+### 🖥️ Windows 部署指南
+
+1. **环境准备**
+   - 安装 [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 或 Anaconda。
+   - 安装 [Node.js](https://nodejs.org/) (推荐 LTS 版本)。
+   - 安装 [Git](https://git-scm.com/download/win)。
+
+2. **克隆与安装**
+   打开 CMD 或 PowerShell：
+   ```bash
+   git clone https://github.com/ReinerBRO/MikuChat.git
+   cd MikuChat/backend
+   conda create -n mikuchat python=3.10
+   conda activate mikuchat
+   pip install -r requirements.txt
+   ```
+
+3. **下载模型**
+   
+   **方式 A：自动下载基础模型**
+   使用内置脚本下载 GPT-SoVITS 基础通用模型：
+   ```bash
+   python download_base_models_v2.py
+   ```
+
+   **方式 B：下载 Miku 专属权重 (必需)**
+   由于模型文件较大，请从网盘下载 Miku 的微调权重文件：
+   
+   > 🔗 **百度网盘下载**: [链接占位符] (提取码: xxxx)
+   
+   下载后请解压并覆盖到项目目录：
+   - 将 `weights` 文件夹内的文件放入 `backend/models/gpt_sovits/miku/weights/` 目录下。
+   - (参考音频 `reference` 已包含在项目中，无需下载)
+
+4. **启动应用**
+   回到根目录，双击 `start.bat` 即可一键启动前后端。同时会自动尝试激活 `mikuchat` conda 环境。
+
 ### 启动应用
 
 只需运行根目录下的启动脚本：

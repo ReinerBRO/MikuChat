@@ -15,5 +15,5 @@ dist/
 
 # Large Models (suggest using LFS or downloading separately)
 backend/gpt_sovits_core/
-backend/models/
+backend/models/gpt_sovits/miku/weights/
 backend/sessions/*.json

@@ -10,7 +10,7 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :5173') do taskkill /F /PID %
 REM Start Backend
 echo Starting Backend (Port 8000)...
 cd backend
-start "MikuChat Backend" C:\Users\rikka0612\miniconda3\envs\mikuchat\python.exe -m uvicorn main:app --reload --port 8000
+start "MikuChat Backend" cmd /k "conda activate mikuchat && python -m uvicorn main:app --reload --port 8000"
 cd ..
 
 REM Wait a moment for backend to start
