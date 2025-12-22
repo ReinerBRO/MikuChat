@@ -11,7 +11,7 @@ torchaudio==2.9.1
 librosa
 soundfile
 opencc
-jieba_fast
+jieba
 onnxruntime
 fast-langdetect
 transformers
@@ -25,3 +25,5 @@ langid
 split-lang
 numpy
 pywebview
+pythonnet
+clr_loader

@@ -94,6 +94,8 @@
    cd MikuChat/backend
    conda create -n mikuchat python=3.10
    conda activate mikuchat
+   # 建议先手动安装 numpy 以避免依赖冲突
+   pip install numpy==1.26.4
    pip install -r requirements.txt
    ```
 
@@ -115,15 +117,28 @@
    
    - (参考音频 `reference` 已包含在项目中，无需下载)
 
-4. **启动应用**
-   回到根目录，双击 `start.bat` 即可一键启动前后端。同时会自动尝试激活 `mikuchat` conda 环境。
+4. **前端构建 (重要)**
+   桌面模式需要预先构建前端：
+   ```bash
+   cd ../frontend
+   npm install
+   # 如果 npm run build 因为类型错误失败，请使用以下命令跳过检查直接构建：
+   npx vite build
+   ```
 
-### 🖥️ 桌面端运行 (macOS)
+5. **启动应用**
+   回到根目录，双击 `start.bat` 即可一键启动前后端。或者双击 `MikuChat.bat` 进入桌面模式。
+
+### 🖥️ 桌面端运行 (Windows & macOS)
 
 如果你想要更像“软件”的体验，可以使用我们封装的桌面模式：
 
-1. **一键启动**：在项目根目录下，直接双击 `MikuChat.command`。
-2. **效果**：它会自动开启后端并弹出一个独立的 MikuChat 原生窗口，无需打开浏览器。
+1. **Windows**: 直接双击项目根目录下的 `MikuChat.bat`。
+2. **macOS**: 直接双击项目根目录下的 `MikuChat.command`。
+3. **效果**: 它会自动开启后端并弹出一个独立的 MikuChat 原生窗口，无需打开浏览器。
+
+> [!IMPORTANT]
+> **桌面模式依赖 `frontend/dist` 目录**。如果双击后报错，请确保已在 `frontend` 目录下执行过 `npx vite build`。
 
 ---
 
