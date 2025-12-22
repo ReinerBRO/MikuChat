@@ -108,10 +108,11 @@
    **方式 B：下载 Miku 专属权重 (必需)**
    由于模型文件较大，请从网盘下载 Miku 的微调权重文件：
    
-   > 🔗 **百度网盘下载**: [链接占位符] (提取码: xxxx)
+   > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1d6AIcaCq6MrEWXvmA_bfOg?pwd=3939) (提取码: 3939)
    
-   下载后请解压并覆盖到项目目录：
-   - 将 `weights` 文件夹内的文件放入 `backend/models/gpt_sovits/miku/weights/` 目录下。
+   网盘中包含 `MikuModel` 文件夹。下载后，请将文件夹内的两个模型文件（`.ckpt` 和 `.pth`）复制到以下目录：
+   `backend/models/gpt_sovits/miku/weights/`
+   
    - (参考音频 `reference` 已包含在项目中，无需下载)
 
 4. **启动应用**
