@@ -25,6 +25,11 @@ interface ChatInterfaceProps {
     live2dModelUrl?: string;
 }
 
+// Helper to strip emotion tags from text
+const cleanMessageText = (text: string) => {
+    return text.replace(/^\[([a-zA-Z]+)\]\s*/i, '');
+};
+
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
     activeSessionId,
     onSessionCreated,
@@ -87,7 +92,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     const data = await response.json();
                     const loadedMessages = data.messages.map((msg: any, index: number) => ({
                         id: `${activeSessionId}-${index}`,
-                        text: msg.content,
+                        text: cleanMessageText(msg.content),
                         sender: msg.role === 'user' ? 'user' : 'miku',
                         timestamp: new Date(msg.timestamp)
                     }));
@@ -157,14 +162,12 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             const data = await response.json();
             if (data.session_id && !activeSessionId) onSessionCreated(data.session_id);
 
-            // Extract and strip emotion tag logic
-            let cleanText = data.response;
+            // Extract emotion tag logic
             const emotionMatch = data.response.match(/^\[([A-Z]+)\]/);
             if (emotionMatch) {
                 setCurrentEmotion(emotionMatch[1]);
-                // Remove the tag and any immediate following whitespace from the display text
-                cleanText = data.response.replace(/^\[([A-Z]+)\]\s*/, '');
             }
+            const cleanText = cleanMessageText(data.response);
 
             const mikuReply: Message = {
                 id: (Date.now() + 1).toString(),
