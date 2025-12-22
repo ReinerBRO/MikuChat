@@ -24,3 +24,4 @@ cn2an
 langid
 split-lang
 numpy
+pywebview
