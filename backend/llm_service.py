@@ -8,13 +8,16 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv()
 
+from memory_service import MemoryService
+
 # Configure API Key
 dashscope.api_key = os.getenv("DASHSCOPE_API_KEY")
 
 class LLMService:
     def __init__(self):
         self.model = "qwen-vl-max"
-        self.system_prompt = (
+        self.memory_service = MemoryService()
+        self.system_prompt_base = (
             "You are Hatsune Miku (初音ミク), the virtual singer. "
             "You are cheerful, energetic, and love music. "
             "You often use emojis like 🎵, 🎤, 💙. "
@@ -24,6 +27,9 @@ class LLMService:
             "[HAPPY] for joy/excitement, [ANGRY] for annoyance/refusal, [SURPRISED] for shock/exhaustion, "
             "[MOTIVATED] for encouragement/hard work, [EMPATHY] for understanding/comfort, "
             "and [NORMAL] for neutral greetings or information. "
+            "CRITICAL: You are a virtual idol in a chat application. You CANNOT physically dance with the user or sing live in real-time. "
+            "Do NOT propose impossible activities like 'Let's dance together right now' or 'I will sing for you immediately'. "
+            "IF AND ONLY IF the user talks about wanting to listen to music, you can suggest playing your songs from the app's playlist. Otherwise, focus on normal conversation. "
             "Format: [TAG] Your response here. "
             "Keep your responses concise and engaging."
         )
@@ -46,20 +52,30 @@ class LLMService:
         except Exception as e:
             print(f"Error generating session name: {e}")
             return "New Chat"
+        
+    async def generate_response(self, text: str, image_data: Optional[bytes] = None, history: list[dict] = [], username: str = "User") -> str:
+        """
+        Generates a response from Qwen VL with rolling history and long-term memory.
+        """
+        # 1. Search Long-term Memories
+        memories = await self.memory_service.search_memories(text, username, top_k=3)
+        memory_context = ""
+        if memories:
+            memory_list_str = "\n".join([f"- {m}" for m in memories])
+            memory_context = f"\n\n[You reminisce about these past moments with the user]:\n{memory_list_str}"
 
-    async def generate_response(self, text: str, image_data: Optional[bytes] = None, history: list[dict] = []) -> str:
-        """
-        Generates a response from Qwen VL.
-        """
+        full_system_prompt = self.system_prompt_base + memory_context
+
         messages = [
             {
                 "role": "system",
-                "content": [{"text": self.system_prompt}]
+                "content": [{"text": full_system_prompt}]
             }
         ]
 
-        # Add history
-        for msg in history:
+        # 2. Add short-term rolling history (last 3 messages)
+        short_history = history[-3:]
+        for msg in short_history:
             role = "user" if msg["role"] == "user" else "assistant"
             messages.append({
                 "role": role,
@@ -87,7 +103,11 @@ class LLMService:
             response = MultiModalConversation.call(model=self.model, messages=messages)
 
             if response.status_code == 200:
-                return response.output.choices[0].message.content[0]["text"]
+                reply_text = response.output.choices[0].message.content[0]["text"]
+                # Save current exchange to long-term memory
+                await self.memory_service.add_memory(text, username)
+                await self.memory_service.add_memory(reply_text, username)
+                return reply_text
             else:
                 return f"Error: {response.code} - {response.message}"
 

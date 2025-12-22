@@ -25,11 +25,16 @@ class ImageService:
                 sys.stderr.write(f"Trying connection via {proxy_name}...\n")
                 sys.stderr.flush()
                 
+                # Use random page offset (pid) to get truly random images
+                # Each page has 'limit' images. 500 pages * 20 images = 10,000 image pool.
+                random_pid = random.randint(0, 500)
+                
                 params = {
                     "page": "dapi",
                     "s": "post",
                     "q": "index",
                     "tags": "hatsune_miku rating:safe",
+                    "pid": random_pid,
                     "limit": 20,
                     "json": 1
                 }

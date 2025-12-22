@@ -203,6 +203,7 @@ function App() {
           onNewChat={handleNewChat}
           onDeleteSession={handleDeleteSession}
           onLogout={handleLogout}
+          currentUser={currentUser}
         >
           <ChatInterface
             activeSessionId={activeSessionId}

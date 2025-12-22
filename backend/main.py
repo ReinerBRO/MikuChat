@@ -379,7 +379,7 @@ async def chat(
         history_list = []
     
     # Generate response
-    response = await llm_service.generate_response(text, image_data, history_list)
+    response = await llm_service.generate_response(text, image_data, history_list, current_username)
     
     # Save messages to session
     from datetime import datetime
@@ -396,6 +396,15 @@ async def chat(
         "timestamp": timestamp
     }, current_username)
     
+    # Record meaningful moments in the Memory Gallery
+    from gallery_service import GalleryService
+    gallery_service = GalleryService()
+    # This is an async call but we can let it run in the background 
+    # OR await it if we want perfect sequence. For now, await it.
+    await gallery_service.evaluate_and_record_moment(text, response, current_username)
+    # Also attempt a summary (it only updates if needed)
+    await gallery_service.generate_daily_summary(current_username)
+    
     # Generate TTS audio if enabled
     audio_url = None
     if enable_tts:
@@ -409,6 +418,14 @@ async def chat(
         "session_id": session_id,
         "audio_url": audio_url
     }
+
+# Memory Gallery Endpoint
+@app.get("/api/gallery")
+async def get_gallery(username: str = "User"):
+    """Get the full memory gallery for a user"""
+    from gallery_service import GalleryService
+    gallery_service = GalleryService()
+    return gallery_service.get_full_gallery(username)
 
 # Random Miku Image Endpoint
 @app.get("/api/random-miku-image")

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Disc, Play, Pause, SkipForward, SkipBack, Music, Search, Globe, Folder, Volume2, VolumeX, Upload, X } from 'lucide-react';
+import { useGame } from '../context/GameContext';
 
 interface Song {
     name: string;
@@ -18,6 +19,7 @@ interface MusicPlayerProps {
 }
 
 const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => {
+    const { playVoice } = useGame();
     const [songs, setSongs] = useState<Song[]>([]);
     const [currentSongIndex, setCurrentSongIndex] = useState<number>(-1);
     const [isPlaying, setIsPlaying] = useState(false);
@@ -74,6 +76,13 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
             audioRef.current.volume = isMuted ? 0 : volume;
         }
     }, [volume, isMuted]);
+
+    // Play Welcome Voice when entering Full View
+    useEffect(() => {
+        if (viewMode === 'full') {
+            playVoice('/audio/welcome_music.wav');
+        }
+    }, [viewMode]);
 
     const fetchLocalSongs = async () => {
         try {
@@ -407,14 +416,20 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
     }
 
     // Mini View (Top Right Widget)
+    // Make the container itself fixed, but allow the inner card to be dragged
     return (
-        <div className="fixed top-6 right-6 z-50 flex flex-col items-end">
+        <div className="fixed top-6 right-6 z-50 pointer-events-none">
+            {/* pointer-events-none on container so it doesn't block clicks when player is moved away, 
+                but we need pointer-events-auto on the player itself */}
             <audio ref={audioRef} onEnded={handleEnded} onError={(e) => console.error("Audio error:", e)} />
 
             <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
+                drag
+                dragMomentum={false}
+                initial={{ opacity: 0, scale: 0.9, x: 0, y: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border border-miku/20 flex items-center gap-3 pr-5"
+                whileDrag={{ scale: 1.05, cursor: "grabbing" }}
+                className="pointer-events-auto bg-white/90 backdrop-blur-md p-3 rounded-full shadow-lg border border-miku/20 flex items-center gap-3 pr-5 cursor-move hover:shadow-xl transition-shadow"
             >
                 <motion.div
                     className={`w-10 h-10 rounded-full bg-black flex items-center justify-center border-2 border-slate-700 relative ${isPlaying ? 'animate-spin-slow' : ''}`}
@@ -425,14 +440,16 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
 
                 <div className="flex flex-col max-w-[120px]">
                     <span className="text-xs font-bold text-slate-700 truncate">{songs[currentSongIndex]?.name || "Miku Player"}</span>
-                    <span className="text-[10px] text-slate-400 truncate">{isPlaying ? "Playing..." : "Paused"}</span>
+                    <span className="text-xs text-slate-400 truncate font-mono">{isPlaying ? "NOW PLAYING" : "PAUSED"}</span>
                 </div>
 
-                <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-                    <button onClick={togglePlay} className="text-miku hover:scale-110 transition-transform">
+                <div className="flex items-center gap-2 border-l border-slate-200 pl-3" onPointerDown={(e) => e.stopPropagation()}>
+                    {/* Stop propagation on buttons so dragging doesn't start when clicking buttons if needed, 
+                        though framer motion usually handles this well. Adding just in case. */}
+                    <button onClick={togglePlay} className="text-miku hover:scale-110 transition-transform p-1">
                         {isPlaying ? <Pause size={18} /> : <Play size={18} />}
                     </button>
-                    <button onClick={nextSong} className="text-slate-400 hover:text-miku transition-colors">
+                    <button onClick={nextSong} className="text-slate-400 hover:text-miku transition-colors p-1">
                         <SkipForward size={16} />
                     </button>
                 </div>

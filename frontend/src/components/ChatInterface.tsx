@@ -1,17 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Image as ImageIcon, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AnimatedAvatar from './AnimatedAvatar';
 import Live2DAvatar from './Live2DAvatar';
+import CyberVisualizer from './CyberVisualizer';
 import ErrorBoundary from './ErrorBoundary';
 import { useGame } from '../context/GameContext';
+import { Send, Image as ImageIcon, Music, Palette, Home, Zap, Flower2, Lock } from 'lucide-react';
 
 interface Message {
     id: string;
     text: string;
     sender: 'user' | 'miku';
     image?: string;
-    audioUrl?: string; // New field for TTS
+    audioUrl?: string;
     timestamp: Date;
 }
 
@@ -32,7 +33,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     avatarMode = 'simple',
     live2dModelUrl = '/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json'
 }) => {
-    const { triggerInteraction } = useGame();
+    // LINK TO GAME CONTEXT
+    const { triggerInteraction, equippedItems, ownedItems, equipItem } = useGame();
+
+    // Use equipped background as source of truth
+    // Default to 'bedroom' if nothing equipped or invalid
+    const currentBg = equippedItems.background || 'bedroom';
+
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
         text: "Hello! I'm Miku. What shall we talk about today? 🎵",
@@ -40,42 +47,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         timestamp: new Date(),
     }]);
 
-    // Load messages when session changes
-    useEffect(() => {
-        const loadSessionMessages = async () => {
-            if (activeSessionId) {
-                try {
-                    const response = await fetch(`http://localhost:8000/api/sessions/${activeSessionId}/messages`);
-                    const data = await response.json();
-
-                    // Convert backend messages to frontend format
-                    const loadedMessages = data.messages.map((msg: any, index: number) => ({
-                        id: `${activeSessionId}-${index}`,
-                        text: msg.content,
-                        sender: msg.role === 'user' ? 'user' : 'miku',
-                        timestamp: new Date(msg.timestamp)
-                    }));
-
-                    setMessages(loadedMessages);
-                } catch (error) {
-                    console.error('Error loading session messages:', error);
-                    setMessages([]);
-                }
-            } else {
-                // Show welcome message for new chat
-                setMessages([{
-                    id: 'welcome',
-                    text: "Hello! I'm Miku. What shall we talk about today? 🎵",
-                    sender: 'miku',
-                    timestamp: new Date(),
-                }]);
-            }
-        };
-
-        loadSessionMessages();
-    }, [activeSessionId]);
-
-    // Random status messages
     const statusMessages = [
         { text: '练舞中', emoji: '💃' },
         { text: '吃大葱中', emoji: '🥬' },
@@ -98,8 +69,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [isTyping, setIsTyping] = useState(false);
     const [ttsEnabled, setTtsEnabled] = useState(true);
+    const [currentEmotion, setCurrentEmotion] = useState<string>('NORMAL');
+    const [isSpeaking, setIsSpeaking] = useState(false);
+
+    // Background UI State
+    const [showBgSelector, setShowBgSelector] = useState(false);
+
     const chatContainerRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Load messages logic
+    useEffect(() => {
+        const loadSessionMessages = async () => {
+            if (activeSessionId) {
+                try {
+                    const response = await fetch(`http://localhost:8000/api/sessions/${activeSessionId}/messages`);
+                    const data = await response.json();
+                    const loadedMessages = data.messages.map((msg: any, index: number) => ({
+                        id: `${activeSessionId}-${index}`,
+                        text: msg.content,
+                        sender: msg.role === 'user' ? 'user' : 'miku',
+                        timestamp: new Date(msg.timestamp)
+                    }));
+                    setMessages(loadedMessages);
+                } catch (error) {
+                    console.error('Error loading session messages:', error);
+                    setMessages([]);
+                }
+            } else {
+                setMessages([{
+                    id: 'welcome',
+                    text: "Hello! I'm Miku. What shall we talk about today? 🎵",
+                    sender: 'miku',
+                    timestamp: new Date(),
+                }]);
+            }
+        };
+        loadSessionMessages();
+    }, [activeSessionId]);
 
     const scrollToBottom = () => {
         if (chatContainerRef.current) {
@@ -116,8 +123,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const handleSendMessage = async () => {
         if (!inputText.trim() && !selectedImage) return;
-
-        // Trigger game interaction (chat)
         triggerInteraction('chat');
 
         const newMessage: Message = {
@@ -138,32 +143,32 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             const formData = new FormData();
             formData.append('text', newMessage.text);
             formData.append('username', currentUser);
-            if (imageToSend) {
-                formData.append('image', imageToSend);
-            }
+            if (imageToSend) formData.append('image', imageToSend);
             formData.append('enable_tts', ttsEnabled.toString());
-
-            // Add session_id if exists
-            if (activeSessionId) {
-                formData.append('session_id', activeSessionId);
-            }
+            if (activeSessionId) formData.append('session_id', activeSessionId);
 
             const response = await fetch('http://localhost:8000/api/chat', {
                 method: 'POST',
                 body: formData,
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to send message');
-            }
+            if (!response.ok) throw new Error('Failed to send message');
 
-            const data = await response.json(); if (data.session_id && !activeSessionId) {
-                onSessionCreated(data.session_id);
+            const data = await response.json();
+            if (data.session_id && !activeSessionId) onSessionCreated(data.session_id);
+
+            // Extract and strip emotion tag logic
+            let cleanText = data.response;
+            const emotionMatch = data.response.match(/^\[([A-Z]+)\]/);
+            if (emotionMatch) {
+                setCurrentEmotion(emotionMatch[1]);
+                // Remove the tag and any immediate following whitespace from the display text
+                cleanText = data.response.replace(/^\[([A-Z]+)\]\s*/, '');
             }
 
             const mikuReply: Message = {
                 id: (Date.now() + 1).toString(),
-                text: data.response,
+                text: cleanText,
                 sender: 'miku',
                 timestamp: new Date(),
                 audioUrl: data.audio_url
@@ -171,16 +176,20 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
             setMessages(prev => [...prev, mikuReply]);
 
-            // Auto-play audio if available
             if (data.audio_url) {
                 const audio = new Audio(`http://localhost:8000${data.audio_url}`);
-                audio.play().catch(e => console.error("Audio playback error:", e));
+                audio.onplay = () => setIsSpeaking(true);
+                audio.onended = () => {
+                    setIsSpeaking(false);
+                    setCurrentEmotion('NORMAL');
+                };
+                audio.play().catch(e => { console.error("Audio error:", e); setIsSpeaking(false); });
             }
         } catch (error) {
             console.error("Error sending message:", error);
             const errorMessage: Message = {
                 id: Date.now().toString(),
-                text: "Gomenne! I couldn't reach the server. Please check your connection or the backend console. 😣",
+                text: "Gomenne! Server error. 😣",
                 sender: 'miku',
                 timestamp: new Date(),
             };
@@ -199,17 +208,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const [avatarPanelCollapsed, setAvatarPanelCollapsed] = useState(() => {
         const saved = localStorage.getItem('miku_avatar_panel_collapsed');
-        return saved !== null ? saved === 'true' : true; // Default to collapsed
+        return saved !== null ? saved === 'true' : true;
     });
 
     const [avatarScale, setAvatarScale] = useState(() => {
         const saved = localStorage.getItem('miku_avatar_scale');
-        return saved !== null ? parseFloat(saved) : 1.0; // Default to 1.0 (100%)
+        return saved !== null ? parseFloat(saved) : 1.0;
     });
 
     const handleToggleAvatarPanel = () => {
         const newState = !avatarPanelCollapsed;
-        console.log('Toggle Avatar Panel:', { current: avatarPanelCollapsed, new: newState });
         setAvatarPanelCollapsed(newState);
         localStorage.setItem('miku_avatar_panel_collapsed', newState.toString());
     };
@@ -220,152 +228,177 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         localStorage.setItem('miku_avatar_scale', newScale.toString());
     };
 
-    // Debug log
-    console.log('ChatInterface render - avatarPanelCollapsed:', avatarPanelCollapsed, 'showAvatar:', showAvatar);
+    // Background Map (Moved inside component or kept outside)
+    const backgrounds: Record<string, string> = {
+        bedroom: '/backgrounds/miku_room.png',
+        cyber_room: '/backgrounds/miku_cyber_room.png',
+        japanese_room: '/backgrounds/miku_japanese_room.png'
+    };
+
+    const handleSwitchBg = (id: string) => {
+        if (ownedItems.includes(id)) {
+            equipItem('background', id);
+            setShowBgSelector(false);
+        }
+    };
 
     return (
         <div className="flex h-full gap-4 relative z-10">
             {/* Left Sidebar - Avatar */}
             {showAvatar && !avatarPanelCollapsed && (
-                <div className="w-[340px] shrink-0 flex flex-col relative">
-                    <div className="glass-panel rounded-2xl p-4 h-full flex items-center justify-center relative overflow-hidden">
-                        {/* Vaporwave 3D Background - Inside Avatar Panel */}
-                        <div className="absolute inset-0 pointer-events-none">
-                            {/* 3D Grid Floor - Less dense */}
-                            <div className="absolute inset-0 opacity-15" style={{
-                                background: `
-                                linear-gradient(0deg, transparent 24%, rgba(93, 217, 210, 0.3) 25%, rgba(93, 217, 210, 0.3) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.3) 75%, rgba(93, 217, 210, 0.3) 76%, transparent 77%, transparent),
-                                linear-gradient(90deg, transparent 24%, rgba(93, 217, 210, 0.25) 25%, rgba(93, 217, 210, 0.25) 26%, transparent 27%, transparent 74%, rgba(93, 217, 210, 0.25) 75%, rgba(93, 217, 210, 0.25) 76%, transparent 77%, transparent)
-                            `,
-                                backgroundSize: '80px 80px',
-                                transform: 'perspective(400px) rotateX(60deg)',
-                                transformOrigin: 'center bottom',
-                                height: '150%',
-                                top: '-25%'
-                            }}></div>
+                <div className="w-[340px] shrink-0 flex flex-col relative transition-all duration-300">
+                    <div className="rounded-2xl p-4 h-full flex items-center justify-center relative overflow-hidden border-4 border-white shadow-xl shadow-miku/10 bg-gradient-to-b from-[#f0fdfa] to-[#ccfbf1]">
 
-                            {/* Pixel Stars - Lighter */}
-                            <div className="absolute inset-0 opacity-30" style={{
-                                backgroundImage: `
-                                radial-gradient(2px 2px at 20% 30%, rgba(93, 217, 210, 0.4), transparent),
-                                radial-gradient(1px 1px at 60% 70%, rgba(93, 217, 210, 0.3), transparent),
-                                radial-gradient(1px 1px at 80% 20%, rgba(160, 240, 237, 0.4), transparent),
-                                radial-gradient(2px 2px at 40% 80%, rgba(93, 217, 210, 0.35), transparent)
-                            `,
-                                backgroundSize: '150px 150px, 200px 200px, 180px 180px, 160px 160px',
-                                animation: 'twinkle 3s ease-in-out infinite'
-                            }}></div>
+                        {/* 8-BIT DECORATIONS - CORNERS */}
+                        <div className="absolute top-2 left-2 w-6 h-6 border-t-4 border-l-4 border-miku opacity-50 z-20 pointer-events-none"></div>
+                        <div className="absolute top-2 right-2 w-6 h-6 border-t-4 border-r-4 border-miku opacity-50 z-20 pointer-events-none"></div>
+                        <div className="absolute bottom-2 left-2 w-6 h-6 border-b-4 border-l-4 border-miku opacity-50 z-20 pointer-events-none"></div>
+                        <div className="absolute bottom-2 right-2 w-6 h-6 border-b-4 border-r-4 border-miku opacity-50 z-20 pointer-events-none"></div>
 
-                            {/* Neon Glow Orbs - Lighter */}
-                            <div className="absolute top-[20%] left-[10%] w-[150px] h-[150px] bg-miku/15 rounded-full blur-[60px] animate-pulse-glow"></div>
-                            <div className="absolute bottom-[20%] right-[10%] w-[120px] h-[120px] bg-miku-light/15 rounded-full blur-[60px] animate-pulse-glow" style={{ animationDelay: '1.5s' }}></div>
+                        {/* BACKGROUND LAYER */}
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentBg}
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.5 }}
+                                className="absolute inset-0 z-0 overflow-hidden rounded-xl"
+                            >
+                                <img
+                                    src={backgrounds[currentBg] || backgrounds['bedroom']}
+                                    alt="Miku Room"
+                                    className="w-full h-full object-cover opacity-90 transition-transform duration-[20s] hover:scale-105"
+                                />
+                                <div className="absolute inset-0 bg-miku/5 mix-blend-overlay"></div>
+                                <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-gradient-to-t from-white/30 to-transparent"></div>
 
-                            {/* Scanlines - Much lighter */}
-                            <div className="absolute inset-0 opacity-3" style={{
-                                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(93, 217, 210, 0.2) 2px, rgba(93, 217, 210, 0.2) 4px)',
-                                animation: 'scanlines 8s linear infinite'
-                            }}></div>
+                                {/* Dark Mode Overlay for Cyber Room */}
+                                {currentBg === 'cyber_room' && (
+                                    <div className="absolute inset-0 bg-blue-900/10 mix-blend-multiply"></div>
+                                )}
 
-                            {/* Floating Particles with Connections */}
-                            <svg className="absolute inset-0 w-full h-full" style={{ zIndex: 1 }}>
-                                {/* Generate connection lines between nearby particles */}
-                                {(() => {
-                                    const particles = Array.from({ length: 15 }, (_, i) => ({
-                                        id: i,
-                                        x: Math.random() * 100,
-                                        y: Math.random() * 100
-                                    }));
+                                {/* Warm Overlay for Japanese Room */}
+                                {currentBg === 'japanese_room' && (
+                                    <div className="absolute inset-0 bg-amber-500/5 mix-blend-overlay"></div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
 
-                                    const lines = [];
-                                    for (let i = 0; i < particles.length; i++) {
-                                        for (let j = i + 1; j < particles.length; j++) {
-                                            const dx = particles[i].x - particles[j].x;
-                                            const dy = particles[i].y - particles[j].y;
-                                            const distance = Math.sqrt(dx * dx + dy * dy);
+                        {/* REACTIVE PARTICLES */}
+                        <CyberVisualizer
+                            isActive={isSpeaking || isTyping}
+                            className={`z-10 mix-blend-screen transition-opacity duration-500 ${currentBg === 'japanese_room' ? 'opacity-40' : 'opacity-90'}`}
+                        />
 
-                                            // Connect if distance is less than 25%
-                                            if (distance < 25) {
-                                                lines.push(
-                                                    <line
-                                                        key={`line-${i}-${j}`}
-                                                        x1={`${particles[i].x}%`}
-                                                        y1={`${particles[i].y}%`}
-                                                        x2={`${particles[j].x}%`}
-                                                        y2={`${particles[j].y}%`}
-                                                        stroke="rgba(93, 217, 210, 0.2)"
-                                                        strokeWidth="1"
-                                                        opacity={0.5 * (1 - distance / 25)}
-                                                    />
-                                                );
-                                            }
-                                        }
-                                    }
-                                    return lines;
-                                })()}
-                            </svg>
-
-                            {/* Floating Square Particles */}
-                            {[...Array(15)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    style={{
-                                        position: 'absolute',
-                                        left: `${Math.random() * 100}%`,
-                                        top: `${Math.random() * 100}%`,
-                                        width: i % 3 === 0 ? '6px' : '4px',
-                                        height: i % 3 === 0 ? '6px' : '4px',
-                                        backgroundColor: i % 2 === 0 ? 'rgba(93, 217, 210, 0.6)' : 'rgba(160, 240, 237, 0.5)',
-                                        boxShadow: '0 0 8px rgba(93, 217, 210, 0.4)',
-                                        animation: `float ${3 + Math.random() * 3}s ease-in-out infinite`,
-                                        animationDelay: `${Math.random() * 2}s`,
-                                        zIndex: 2
-                                    }}
-                                ></div>
-                            ))}
-                        </div>
+                        {/* --- UI CONTROLS --- */}
 
                         {/* Close Button */}
                         <button
                             onClick={handleToggleAvatarPanel}
-                            className="absolute top-4 right-4 p-2 hover:bg-miku/10 rounded-lg transition-colors z-40"
+                            className="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white text-miku rounded-lg transition-all z-40 shadow-sm border border-miku/20"
                             title="Hide Avatar"
                         >
-                            ←
+                            <span className="font-bold text-lg">×</span>
                         </button>
 
-                        {/* Avatar - Above background */}
-                        <div className="relative z-10 flex flex-col items-center gap-4 w-full group">
-                            <div style={{ transform: `scale(${avatarScale})`, transition: 'transform 0.3s ease' }}>
+                        {/* Theme Selector Button (Top Left) */}
+                        <div className="absolute top-4 left-4 z-40">
+                            <button
+                                onClick={() => setShowBgSelector(!showBgSelector)}
+                                className="p-2 bg-white/50 hover:bg-white text-miku rounded-lg transition-all shadow-sm border border-miku/20"
+                                title="Change Background"
+                            >
+                                <Palette size={20} />
+                            </button>
+
+                            {/* Theme Menu */}
+                            <AnimatePresence>
+                                {showBgSelector && (
+                                    <motion.div
+                                        initial={{ opacity: 0, scale: 0.9, y: -10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.9, y: -10 }}
+                                        className="absolute top-12 left-0 w-48 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-miku/20 p-2 flex flex-col gap-2"
+                                    >
+                                        <div className="text-xs font-bold text-slate-400 px-2 pb-1 border-b border-slate-100">BACKGROUNDS</div>
+
+                                        {/* Bedroom (Always owned) */}
+                                        <button
+                                            onClick={() => handleSwitchBg('bedroom')}
+                                            className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${currentBg === 'bedroom' ? 'bg-miku/20 text-miku-dark' : 'hover:bg-slate-100'}`}
+                                        >
+                                            <div className="w-8 h-8 rounded bg-[#ccfbf1] flex items-center justify-center border border-miku/30">
+                                                <Home size={14} className="text-miku" />
+                                            </div>
+                                            <span className="text-sm font-medium">Bedroom</span>
+                                        </button>
+
+                                        {/* Cyber Room */}
+                                        {ownedItems.includes('cyber_room') ? (
+                                            <button
+                                                onClick={() => handleSwitchBg('cyber_room')}
+                                                className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${currentBg === 'cyber_room' ? 'bg-cyan-100 text-cyan-700' : 'hover:bg-slate-100'}`}
+                                            >
+                                                <div className="w-8 h-8 rounded bg-cyan-900 flex items-center justify-center border border-cyan-500">
+                                                    <Zap size={14} className="text-cyan-400" />
+                                                </div>
+                                                <span className="text-sm font-medium">Future Apt.</span>
+                                            </button>
+                                        ) : null}
+
+                                        {/* Japanese Room */}
+                                        {ownedItems.includes('japanese_room') ? (
+                                            <button
+                                                onClick={() => handleSwitchBg('japanese_room')}
+                                                className={`flex items-center gap-3 p-2 rounded-lg transition-colors ${currentBg === 'japanese_room' ? 'bg-amber-100 text-amber-800' : 'hover:bg-slate-100'}`}
+                                            >
+                                                <div className="w-8 h-8 rounded bg-amber-900 flex items-center justify-center border border-amber-500">
+                                                    <Flower2 size={14} className="text-amber-400" />
+                                                </div>
+                                                <span className="text-sm font-medium">Tea Room</span>
+                                            </button>
+                                        ) : null}
+
+                                        {!ownedItems.includes('cyber_room') && !ownedItems.includes('japanese_room') && (
+                                            <div className="p-2 text-xs text-slate-400 text-center italic">
+                                                Visit Shop to unlock more!
+                                            </div>
+                                        )}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+
+                        {/* Avatar */}
+                        <div className="relative z-10 flex flex-col items-center justify-end h-full w-full pb-8 group pointer-events-none">
+                            <div className="pointer-events-auto" style={{ transform: `scale(${avatarScale})`, transition: 'transform 0.3s ease', transformOrigin: 'bottom center' }}>
                                 <ErrorBoundary>
                                     {avatarMode === 'live2d' ? (
-                                        <Live2DAvatar className="w-[300px] h-[400px]" modelUrl={live2dModelUrl} />
+                                        <Live2DAvatar
+                                            className="w-[300px] h-[450px]"
+                                            modelUrl={live2dModelUrl}
+                                            emotion={currentEmotion}
+                                            isSpeaking={isSpeaking}
+                                        />
                                     ) : (
                                         <AnimatedAvatar className="w-[280px] h-[280px]" />
                                     )}
                                 </ErrorBoundary>
                             </div>
 
-                            {/* Scale Slider - Only visible on hover */}
-                            <div className="w-full px-4 mt-auto opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <div className="glass-panel rounded-lg p-3 space-y-2">
-                                    <div className="flex items-center justify-between text-xs text-miku">
-                                        <span>🔍 Size</span>
-                                        <span className="font-mono">{Math.round(avatarScale * 100)}%</span>
-                                    </div>
+                            {/* Scale Slider */}
+                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 pointer-events-auto">
+                                <div className="bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-lg border border-miku/20 flex items-center gap-3">
+                                    <span className="text-xs font-bold text-miku whitespace-nowrap">SCALE</span>
                                     <input
                                         type="range"
                                         min="0.5"
-                                        max="1.5"
-                                        step="0.1"
+                                        max="1.3"
+                                        step="0.05"
                                         value={avatarScale}
                                         onChange={handleScaleChange}
-                                        className="w-full h-2 bg-gradient-to-r from-miku/30 to-blue-500/30 rounded-lg appearance-none cursor-pointer
-                                                   [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 
-                                                   [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-miku 
-                                                   [&::-webkit-slider-thumb]:to-blue-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg
-                                                   [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full 
-                                                   [&::-moz-range-thumb]:bg-gradient-to-r [&::-moz-range-thumb]:from-miku [&::-moz-range-thumb]:to-blue-500 
-                                                   [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg"
+                                        className="w-full h-1.5 bg-slate-200 rounded-full appearance-none cursor-pointer accent-miku"
                                     />
                                 </div>
                             </div>
@@ -374,12 +407,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
             )}
 
-            {/* Right Side - Chat */}
+            {/* Right Side - Chat (Unchanged) */}
             <div className="flex flex-col flex-1 min-w-0 relative">
-                {/* Header */}
+                {/* ... (Header and Chat Area unchanged) ... */}
                 <header className="flex items-center justify-between p-4 glass-panel rounded-t-2xl mb-4 shrink-0 relative z-20">
                     <div className="flex items-center gap-3">
-                        {/* Show Avatar button when collapsed */}
                         {avatarPanelCollapsed && (
                             <button
                                 onClick={handleToggleAvatarPanel}
@@ -402,10 +434,11 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             </p>
                         </div>
                     </div>
-                    <Music className="text-miku animate-bounce" />
+                    <div className="flex items-center gap-4">
+                        <Music className="text-miku animate-bounce" />
+                    </div>
                 </header>
 
-                {/* Chat Area */}
                 <div ref={chatContainerRef} className="flex-1 overflow-y-auto glass-panel rounded-2xl p-4 mb-4 space-y-4 custom-scrollbar relative">
                     <div className="relative z-10">
                         <AnimatePresence>
@@ -435,15 +468,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                     </div>
                                 </motion.div>
                             ))}
-
                             {isTyping && (
-                                <motion.div
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    className="flex justify-start"
-                                >
+                                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
                                     <div className="bg-miku/10 border border-miku/30 p-3 rounded-2xl rounded-tl-none flex gap-1">
-                                        <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                        <span className="w-2 h-2 bg-miku rounded-full animate-bounce"></span>
                                         <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
                                         <span className="w-2 h-2 bg-miku rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                                     </div>
@@ -453,40 +481,16 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     </div>
                 </div>
 
-                {/* Input Area */}
                 <div className="glass-panel rounded-2xl p-2 flex items-end gap-2 shrink-0 relative z-20">
-                    <button
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl transition-colors"
-                        title="Upload Image"
-                    >
+                    <button onClick={() => fileInputRef.current?.click()} className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl" title="Upload Image">
                         <ImageIcon size={20} />
                     </button>
                     <div className="relative group">
-                        <button
-                            onClick={() => setTtsEnabled(!ttsEnabled)}
-                            className={`p-3 rounded-xl transition-all ${ttsEnabled
-                                ? 'text-miku bg-miku/10 shadow-inner shadow-miku/10'
-                                : 'text-theme-muted hover:text-miku/70 hover:bg-miku/5'}`}
-                        >
+                        <button onClick={() => setTtsEnabled(!ttsEnabled)} className={`p-3 rounded-xl transition-all ${ttsEnabled ? 'text-miku bg-miku/10' : 'text-theme-muted hover:text-miku/70'}`}>
                             <Music size={20} className={ttsEnabled ? "animate-pulse" : ""} />
                         </button>
-
-                        {/* Custom Tooltip */}
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1 bg-tech-panel/90 backdrop-blur-md border border-miku/30 text-miku text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50 shadow-lg shadow-miku/10">
-                            {ttsEnabled ? "关闭语音输出" : "开启语音输出"}
-                            {/* Simple triangle arrow */}
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-x-4 border-x-transparent border-t-4 border-t-miku/30"></div>
-                        </div>
                     </div>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={(e) => e.target.files && setSelectedImage(e.target.files[0])}
-                        className="hidden"
-                        accept="image/*"
-                    />
-
+                    <input type="file" ref={fileInputRef} onChange={(e) => e.target.files && setSelectedImage(e.target.files[0])} className="hidden" accept="image/*" />
                     <div className="flex-1 bg-tech-panel/50 rounded-xl p-2 border border-slate-200 focus-within:border-miku transition-colors flex flex-col">
                         {selectedImage && (
                             <div className="flex items-center justify-between bg-slate-100 p-1 rounded mb-1 text-xs">
@@ -494,21 +498,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 <button onClick={() => setSelectedImage(null)} className="text-red-400 hover:text-red-300">×</button>
                             </div>
                         )}
-                        <textarea
-                            value={inputText}
-                            onChange={(e) => setInputText(e.target.value)}
-                            onKeyDown={handleKeyPress}
-                            placeholder="Type a message to Miku..."
-                            className="bg-transparent border-none focus:ring-0 text-theme-text resize-none h-10 max-h-32 py-2 px-1 w-full placeholder-theme-muted"
-                            rows={1}
-                        />
+                        <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyPress} placeholder="Type a message to Miku..." className="bg-transparent border-none focus:ring-0 text-theme-text resize-none h-10 max-h-32 py-2 px-1 w-full placeholder-theme-muted" rows={1} />
                     </div>
-
-                    <button
-                        onClick={handleSendMessage}
-                        disabled={!inputText.trim() && !selectedImage}
-                        className="p-3 bg-gradient-to-r from-miku to-blue-500 rounded-xl text-white shadow-lg shadow-miku/20 hover:shadow-miku/40 transform hover:-translate-y-1 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+                    <button onClick={handleSendMessage} disabled={!inputText.trim() && !selectedImage} className="p-3 bg-gradient-to-r from-miku to-blue-500 rounded-xl text-white shadow-lg hover:shadow-miku/40 transform hover:-translate-y-1 transition-all disabled:opacity-50">
                         <Send size={20} />
                     </button>
                 </div>

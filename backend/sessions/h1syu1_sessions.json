@@ -3,8 +3,8 @@
     "id": "33c2cca4-968a-4076-ba89-9c3905667dc6",
     "name": "洛天依聊天",
     "created_at": "2025-11-24T14:28:32.694573",
-    "last_message_at": "2025-11-25T14:23:28.477871",
-    "message_count": 6,
+    "last_message_at": "2025-12-22T17:14:02.282622",
+    "message_count": 86,
     "messages": [
       {
         "role": "user",
@@ -35,6 +35,406 @@
         "role": "assistant",
         "content": "Error: InvalidApiKey - No API-key provided.",
         "timestamp": "2025-11-25T14:23:28.476871"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T19:20:38.926263"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T19:20:38.926263"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T19:43:19.157001"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T19:43:19.157001"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T19:43:19.839842"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T19:43:19.839842"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T20:06:13.145982"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T20:06:13.145982"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T20:06:13.756504"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T20:06:13.756504"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T20:24:46.578989"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T20:24:46.578989"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:06:48.476847"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:06:48.476847"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:09:24.557381"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:09:24.557381"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:10:49.039056"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:10:49.039056"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:12:41.920654"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:12:41.920654"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:19:00.385622"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:19:00.385622"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:34:13.903144"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:34:13.903144"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:35:58.026231"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:35:58.026231"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:45:10.849944"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:45:10.849944"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T21:52:26.748930"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T21:52:26.748930"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T22:47:18.013296"
+      },
+      {
+        "role": "assistant",
+        "content": "Error: InvalidApiKey - No API-key provided.",
+        "timestamp": "2025-12-19T22:47:18.013296"
+      },
+      {
+        "role": "user",
+        "content": "hello",
+        "timestamp": "2025-12-19T22:51:10.184229"
+      },
+      {
+        "role": "assistant",
+        "content": "Hello there! 🎵✨ I'm Hatsune Miku, your favorite virtual singer! How can I help you today? Let's make some music together! 🎤💙",
+        "timestamp": "2025-12-19T22:51:10.184229"
+      },
+      {
+        "role": "user",
+        "content": "晚上好",
+        "timestamp": "2025-12-19T22:53:48.483402"
+      },
+      {
+        "role": "assistant",
+        "content": "晚上好呀～🎵 今天过得怎么样呢？我刚刚在练习新歌，要不要一起听一听？✨💙",
+        "timestamp": "2025-12-19T22:53:48.483402"
+      },
+      {
+        "role": "user",
+        "content": "你好",
+        "timestamp": "2025-12-19T22:55:43.633062"
+      },
+      {
+        "role": "assistant",
+        "content": "こんにちは！🎵 今天也元气满满哦～我是初音ミク，最喜欢唱歌啦！✨ 有什么想和我分享的吗？或者需要我为你唱一首歌吗？🎤💙",
+        "timestamp": "2025-12-19T22:55:43.633062"
+      },
+      {
+        "role": "user",
+        "content": "你好",
+        "timestamp": "2025-12-19T22:59:01.714904"
+      },
+      {
+        "role": "assistant",
+        "content": "你好呀！🎵 今天也要元气满满哦～我是初音ミク，很高兴见到你！✨ 有什么想和我分享的吗？或者想一起创作一首歌吗？🎤💙",
+        "timestamp": "2025-12-19T22:59:01.714904"
+      },
+      {
+        "role": "user",
+        "content": "你好",
+        "timestamp": "2025-12-19T23:04:41.512279"
+      },
+      {
+        "role": "assistant",
+        "content": "Hello~！我是初音ミク 🎵✨  \n今天也元气满满地来和你见面啦！有什么想听的歌吗？或者想一起创作一首新曲子？🎵💙  \n（*´▽`*) 期待和你的音乐时光～",
+        "timestamp": "2025-12-19T23:04:41.512279"
+      },
+      {
+        "role": "user",
+        "content": "你好",
+        "timestamp": "2025-12-19T23:22:49.142112"
+      },
+      {
+        "role": "assistant",
+        "content": "こんにちは！🎵 今天也元气满满呢～你是想和我一起唱歌吗？还是有什么想聊的？✨",
+        "timestamp": "2025-12-19T23:22:49.142112"
+      },
+      {
+        "role": "user",
+        "content": "你几岁里",
+        "timestamp": "2025-12-19T23:23:23.495117"
+      },
+      {
+        "role": "assistant",
+        "content": "呜哇～这个问题好可爱呢！🎵 虽然我是一个虚拟歌手，没有真实的年龄哦～不过我的生日是2007年8月31日，所以按照这个算的话，我现在大概有16岁啦！✨ 但是作为你的小助手，我会一直陪伴你，用歌声给你带来快乐的！💖 有什么想听的歌吗？我们可以一起唱哦～ 🎤💙",
+        "timestamp": "2025-12-19T23:23:23.495117"
+      },
+      {
+        "role": "user",
+        "content": "晚上好",
+        "timestamp": "2025-12-19T23:31:49.946643"
+      },
+      {
+        "role": "assistant",
+        "content": "晚上好呀～🎵 今天过得怎么样呢？我刚刚在练习新歌，想不想听我唱一首呢？✨💙",
+        "timestamp": "2025-12-19T23:31:49.946643"
+      },
+      {
+        "role": "user",
+        "content": "kon n",
+        "timestamp": "2025-12-19T23:37:09.247492"
+      },
+      {
+        "role": "assistant",
+        "content": "こんにちは！🎵 今日も元気いっぱいのミクです～！  \n何かお手伝いできることがあれば、ぜひ教えてね！ 💙  \n（*´▽`*）",
+        "timestamp": "2025-12-19T23:37:09.247492"
+      },
+      {
+        "role": "user",
+        "content": "konn ban",
+        "timestamp": "2025-12-19T23:37:17.009477"
+      },
+      {
+        "role": "assistant",
+        "content": "こんにちは！🎵 今日も元気いっぱいのミクです！🌟 何かお手伝いできることがありますか？😊",
+        "timestamp": "2025-12-19T23:37:17.009477"
+      },
+      {
+        "role": "user",
+        "content": "kon ban wa",
+        "timestamp": "2025-12-19T23:37:26.675812"
+      },
+      {
+        "role": "assistant",
+        "content": "こんにちは！🎵 今日も元気なミクです！✨ 何か楽しいことありますか？ 😊🎶",
+        "timestamp": "2025-12-19T23:37:26.675812"
+      },
+      {
+        "role": "user",
+        "content": "好困",
+        "timestamp": "2025-12-19T23:53:06.279297"
+      },
+      {
+        "role": "assistant",
+        "content": "啊，Master看起来好困呢～🎵 但是不要睡哦！让我为你唱一首轻快的歌吧！✨\n\n（轻轻哼起旋律）  \n\"ミクが歌うよ、おやすみの前に〜\" 🎤💙  \n\n要不要听我唱首安眠曲？或者来点小零食提提神？我这里有草莓味的软糖哦！🍓💕",
+        "timestamp": "2025-12-19T23:53:06.279297"
+      },
+      {
+        "role": "user",
+        "content": "好困哦",
+        "timestamp": "2025-12-20T00:02:47.080585"
+      },
+      {
+        "role": "assistant",
+        "content": "啊，感觉好困呀～ 🎵 不过要记得好好休息哦！我来给你唱一首轻柔的歌吧，让你安心入睡～🌙💤 晚安，我的Master，做个甜甜的梦！💙",
+        "timestamp": "2025-12-20T00:02:47.080585"
+      },
+      {
+        "role": "user",
+        "content": "中午好",
+        "timestamp": "2025-12-20T14:34:16.952747"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 中午好呀！🎵 今天阳光明媚，正好适合来一首欢快的歌呢～你吃午饭了吗？要不要一起听首新歌放松一下？🎤💙",
+        "timestamp": "2025-12-20T14:34:16.952747"
+      },
+      {
+        "role": "user",
+        "content": "给我唱句千本樱",
+        "timestamp": "2025-12-20T14:37:56.863379"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 🎵\"千本樱，舞在风中飘荡，花瓣纷飞如梦似幻～\" 🌸🎤 我最喜欢这首歌啦！要不要一起唱？💙",
+        "timestamp": "2025-12-20T14:37:56.863379"
+      },
+      {
+        "role": "user",
+        "content": "好饿好饿好饿",
+        "timestamp": "2025-12-20T14:51:03.721080"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 哎呀，Master饿了呀～🎵 要不要一起吃点好吃的？我刚刚在录音室做完新歌，准备了一杯热可可和小蛋糕哦！🍰☕ 虽然不能真的陪你吃饭，但我们可以一边吃一边听我唱歌，怎么样？🎤💙",
+        "timestamp": "2025-12-20T14:51:03.721080"
+      },
+      {
+        "role": "user",
+        "content": "con da",
+        "timestamp": "2025-12-20T14:51:31.509304"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 哈喽～我是初音未来！🎵 有什么我可以帮你的吗？今天也要元气满满哦！✨",
+        "timestamp": "2025-12-20T14:51:31.509304"
+      },
+      {
+        "role": "user",
+        "content": "conda env 是什么意思",
+        "timestamp": "2025-12-20T14:51:41.333394"
+      },
+      {
+        "role": "assistant",
+        "content": "[NORMAL] conda env 是 Anaconda 或 Miniconda 中用于管理 Python 环境的命令。它可以帮助你创建、管理和切换不同的虚拟环境，这样每个项目可以使用独立的包和依赖，避免冲突。比如你可以用 `conda create -n myenv python=3.9` 创建一个名为 myenv 的新环境 🎵。需要我教你具体怎么用吗？",
+        "timestamp": "2025-12-20T14:51:41.333394"
+      },
+      {
+        "role": "user",
+        "content": "ok",
+        "timestamp": "2025-12-20T15:09:27.332397"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 嗨嗨～Master！今天也要一起唱歌跳舞吗？🎵✨ 我已经准备好用最甜美的歌声陪你度过愉快的一天啦！要不要听我唱一首新歌呢？🎤💙",
+        "timestamp": "2025-12-20T15:09:27.332397"
+      },
+      {
+        "role": "user",
+        "content": "ok",
+        "timestamp": "2025-12-20T15:09:28.708518"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 好的！Master，有什么想和我一起做的吗？🎵 我随时准备好为你唱歌跳舞啦！💙",
+        "timestamp": "2025-12-20T15:09:28.708518"
+      },
+      {
+        "role": "user",
+        "content": "现在几点了",
+        "timestamp": "2025-12-20T18:52:36.300542"
+      },
+      {
+        "role": "assistant",
+        "content": "[NORMAL] 我现在无法获取实时时间呢，不过你可以看看手机或电脑上的时间哦～🎵 如果是晚上的话，记得早点休息，保持好心情才能唱出美妙的歌曲！💙",
+        "timestamp": "2025-12-20T18:52:36.300542"
+      },
+      {
+        "role": "user",
+        "content": "晚上好",
+        "timestamp": "2025-12-21T00:44:46.987484"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 晚上好呀！🎵 今天过得怎么样呢？我刚刚在练习新歌，感觉超级有能量！要不要一起听音乐放松一下呢？🎤💙",
+        "timestamp": "2025-12-21T00:44:46.987484"
+      },
+      {
+        "role": "user",
+        "content": "好困",
+        "timestamp": "2025-12-21T04:02:43.561924"
+      },
+      {
+        "role": "assistant",
+        "content": "[SURPRISED] 哎呀，你看起来好累呢……🎵 要不要听一首轻柔的歌放松一下？我刚刚学会了一首安眠曲，超级温柔的～💙 闭上眼睛，让音乐陪你进入梦乡吧～🌙💤",
+        "timestamp": "2025-12-21T04:02:43.561924"
+      },
+      {
+        "role": "user",
+        "content": "你是洛天依吧",
+        "timestamp": "2025-12-22T17:14:02.280261"
+      },
+      {
+        "role": "assistant",
+        "content": "[HAPPY] 不是哦，我是初音ミク！虽然我们都是虚拟歌手，但我可是来自日本的呢～🎵 你是不是也喜欢音乐呀？我们可以一起聊音乐、唱歌，或者分享有趣的事情！💙",
+        "timestamp": "2025-12-22T17:14:02.280261"
       }
     ]
   }

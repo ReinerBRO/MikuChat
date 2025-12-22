@@ -13,6 +13,11 @@ interface GameState {
     affinity: number;
     negiCoins: number;
     mood: number; // 0-100
+    ownedItems: string[]; // List of item IDs
+    equippedItems: {
+        outfit?: string;
+        background?: string;
+    };
 }
 
 interface Notification {
@@ -29,30 +34,75 @@ interface GameContextType extends GameState {
     triggerInteraction: (type: 'chat' | 'touch' | 'gift') => void;
     notifications: Notification[];
     removeNotification: (id: string) => void;
+    unlockItem: (itemId: string) => void;
+    equipItem: (category: 'outfit' | 'background', itemId: string) => void;
+    addNotification: (message: string, type?: 'success' | 'info' | 'warning') => void;
+    playVoice: (url: string) => void;
 }
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 const INITIAL_STATE: GameState = {
     affinity: 0,
-    negiCoins: 50, // Initial bonus
+    negiCoins: 10000, // BIG MONEY
     mood: 80,
+    ownedItems: ['default_outfit', 'bedroom'],
+    equippedItems: {
+        outfit: 'default_outfit',
+        background: 'bedroom'
+    }
 };
 
 export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     // Load from local storage or use initial
     const [state, setState] = useState<GameState>(() => {
         const saved = localStorage.getItem('miku_game_state');
-        return saved ? JSON.parse(saved) : INITIAL_STATE;
+        // FORCE RESET (Hard overwrite to ensure clean state as requested)
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                return {
+                    ...INITIAL_STATE,
+                    ...parsed,
+                    negiCoins: 10000,
+                    ownedItems: ['default_outfit', 'bedroom'], // STRICT RESET
+                    equippedItems: { outfit: 'default_outfit', background: 'bedroom' }
+                };
+            } catch (e) {
+                return INITIAL_STATE;
+            }
+        }
+        return INITIAL_STATE;
     });
 
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [lastInteraction, setLastInteraction] = useState<Record<string, number>>({});
 
+    // Audio State for global voice management
+    const [currentAudio, setCurrentAudio] = useState<HTMLAudioElement | null>(null);
+
     // Save to local storage whenever state changes
     useEffect(() => {
         localStorage.setItem('miku_game_state', JSON.stringify(state));
     }, [state]);
+
+    const playVoice = (url: string) => {
+        // Stop currently playing audio if any
+        if (currentAudio) {
+            currentAudio.pause();
+            currentAudio.currentTime = 0;
+        }
+
+        const audio = new Audio(url);
+        audio.volume = 1.0;
+        audio.play().catch(e => console.warn("Voice play failed:", e));
+
+        setCurrentAudio(audio);
+
+        audio.onended = () => {
+            setCurrentAudio(prev => prev === audio ? null : prev);
+        };
+    };
 
     const addNotification = (message: string, type: 'success' | 'info' | 'warning' = 'info') => {
         const id = Date.now().toString() + Math.random().toString();
@@ -89,6 +139,26 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }));
     };
 
+    const unlockItem = (itemId: string) => {
+        setState(prev => {
+            if (prev.ownedItems.includes(itemId)) return prev;
+            return {
+                ...prev,
+                ownedItems: [...prev.ownedItems, itemId]
+            };
+        });
+    };
+
+    const equipItem = (category: 'outfit' | 'background', itemId: string) => {
+        setState(prev => ({
+            ...prev,
+            equippedItems: {
+                ...prev.equippedItems,
+                [category]: itemId
+            }
+        }));
+    };
+
     const triggerInteraction = (type: 'chat' | 'touch' | 'gift') => {
         const now = Date.now();
         const lastTime = lastInteraction[type] || 0;
@@ -100,7 +170,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (now - lastTime < cooldown) {
             if (type === 'touch') {
                 // Optional: warn about touching too much?
-                // addNotification("Miku needs some space!", 'warning');
             }
             return;
         }
@@ -113,8 +182,6 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 addAffinity(1);
                 addCoins(1);
                 changeMood(0.5);
-                // Chat is subtle, maybe no notification or just for coins?
-                // addNotification("+1 NegiCoin", 'success'); 
                 break;
             case 'touch':
                 if (state.mood > 20) {
@@ -145,7 +212,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             currentLevel,
             triggerInteraction,
             notifications,
-            removeNotification
+            removeNotification,
+            unlockItem,
+            equipItem,
+            addNotification,
+            playVoice
         }}>
             {children}
         </GameContext.Provider>

@@ -1,10 +1,10 @@
 import React from 'react';
-import { MessageSquare, Music, Settings, LogOut, Newspaper, Box, ShoppingBag } from 'lucide-react';
+import { MessageSquare, Music, Settings, LogOut, Newspaper, Box, ShoppingBag, BookHeart } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 interface NavigationRailProps {
-    activeTab: 'chat' | 'news' | 'music' | 'settings' | '3d' | 'shop';
-    onTabChange: (tab: 'chat' | 'news' | 'music' | 'settings' | '3d' | 'shop') => void;
+    activeTab: 'chat' | 'news' | 'music' | 'settings' | '3d' | 'shop' | 'memories';
+    onTabChange: (tab: 'chat' | 'news' | 'music' | 'settings' | '3d' | 'shop' | 'memories') => void;
     onLogout: () => void;
 }
 
@@ -13,6 +13,7 @@ export default function NavigationRail({ activeTab, onTabChange, onLogout }: Nav
         { id: 'chat', icon: MessageSquare, label: 'Chat' },
         { id: 'news', icon: Newspaper, label: 'News' },
         { id: 'music', icon: Music, label: 'Music' },
+        { id: 'memories', icon: BookHeart, label: 'Inner World' },
         { id: '3d', icon: Box, label: '3D Miku' },
         { id: 'shop', icon: ShoppingBag, label: 'Shop' },
         { id: 'settings', icon: Settings, label: 'Settings' },

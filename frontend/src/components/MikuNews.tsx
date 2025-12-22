@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Newspaper, Calendar, ExternalLink, Music, Ticket, ShoppingBag, Gamepad2, Users, Sparkles, Loader2 } from 'lucide-react';
+import { useGame } from '../context/GameContext';
 
 interface NewsItem {
     id: string;
@@ -23,11 +24,17 @@ const categories = [
 ];
 
 export default function MikuNews() {
+    const { playVoice } = useGame();
     const [selectedCategory, setSelectedCategory] = useState('全部');
     const [newsSource, setNewsSource] = useState('all');
     const [news, setNews] = useState<NewsItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // Play Welcome Voice on mount
+    useEffect(() => {
+        playVoice('/audio/welcome_news.wav');
+    }, []);
 
     useEffect(() => {
         const fetchNews = async () => {

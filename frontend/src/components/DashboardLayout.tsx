@@ -7,6 +7,7 @@ import Miku3D from './Miku3D';
 import StatusPanel from './StatusPanel';
 import NotificationOverlay from './NotificationOverlay';
 import Shop from './Shop';
+import MemoryGallery from './MemoryGallery';
 
 
 interface ChatSession {
@@ -26,6 +27,7 @@ interface DashboardLayoutProps {
     onNewChat: () => void;
     onDeleteSession: (sessionId: string) => void;
     onLogout: () => void;
+    currentUser: string;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
@@ -36,14 +38,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     onSelectSession,
     onNewChat,
     onDeleteSession,
-    onLogout
+    onLogout,
+    currentUser
 }) => {
-    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop'>('chat');
+    const [activeTab, setActiveTab] = useState<'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop' | 'memories'>('chat');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() =>
         localStorage.getItem('miku_sidebar_collapsed') === 'true'
     );
 
-    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop') => {
+    const handleTabChange = (tab: 'chat' | 'music' | 'news' | 'settings' | '3d' | 'shop' | 'memories') => {
         if (tab === 'settings') {
             if (onOpenSettings) onOpenSettings();
         } else {
@@ -113,6 +116,16 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             <div className={activeTab === 'music' ? 'flex-1 h-full min-w-0' : ''}>
                 <MusicPlayer viewMode={activeTab === 'music' ? 'full' : 'mini'} />
             </div>
+
+            {/* Memories View */}
+            {activeTab === 'memories' && (
+                <div className="flex-1 h-full min-w-0">
+                    <MemoryGallery
+                        username={currentUser}
+                        onClose={() => setActiveTab('chat')}
+                    />
+                </div>
+            )}
         </div>
     );
 };
