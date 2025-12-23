@@ -1,19 +1,23 @@
-# Python
+# Large Models & Binary Files (Precise ignore)
+*.pth
+*.ckpt
+*.bin
+*.onnx
+*.zip
+*.pt
+*.wav
+*.mp3
+
+# Special Large Directories
+backend/gpt_sovits_core/GPT_SoVITS/pretrained_models/
+backend/models/gpt_sovits/miku/weights/
+backend/sessions/*.json
+
+# Keep structure but ignore heavy caches
 __pycache__/
-*.py[cod]
-*$py.class
-.env
+.DS_Store
+node_modules/
+dist/
 venv/
 .venv/
 env/
-backend/static/audio/*.wav
-
-# Node
-node_modules/
-dist/
-.DS_Store
-
-# Large Models (suggest using LFS or downloading separately)
-backend/gpt_sovits_core/
-backend/models/gpt_sovits/miku/weights/
-backend/sessions/*.json
