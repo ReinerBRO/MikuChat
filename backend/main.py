@@ -408,10 +408,17 @@ async def chat(
     # Generate TTS audio if enabled
     audio_url = None
     if enable_tts:
+        print(f"DEBUG: Generating TTS for response: {response[:50]}...")
         try:
             audio_url = await generate_tts(response)
+            if audio_url:
+                print(f"DEBUG: TTS generated successfully: {audio_url}")
+            else:
+                print("DEBUG: TTS generation returned None")
         except Exception as e:
-            print(f"Failed to generate TTS for chat response: {e}")
+            print(f"DEBUG: Failed to generate TTS for chat response: {e}")
+            import traceback
+            traceback.print_exc()
     
     return {
         "response": response,

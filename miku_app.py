@@ -96,7 +96,7 @@ async def not_found_exception_handler(request, exc):
 def start_backend():
     # 切换到 backend 目录确保权重路径正确
     os.chdir(os.path.join(BASE_DIR, "backend"))
-    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="error")
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")
 
 if __name__ == "__main__":
     if not os.path.exists(DIST_DIR):

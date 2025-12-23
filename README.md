@@ -80,7 +80,17 @@
 3. **模型下载**
    项目需要 GPT-SoVITS 底模和 Miku 权重文件，请确保将其放置在 `backend/models/gpt_sovits/miku/weights/`。
 
-### 🖥️ Windows 部署指南
+### ⚡ Windows 一键安装 (推荐)
+
+如果你是 Windows 用户，可以使用我们提供的一键安装脚本：
+
+1. **准备工作**：确保已安装 [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 和 [Node.js](https://nodejs.org/)。
+2. **运行脚本**：双击项目根目录下的 **`setup_windows.bat`**。
+3. **效果**：脚本会自动创建 `mikuchat` 环境、安装所有依赖并完成前端构建。
+
+---
+
+### 🖥️ Windows 手动部署指南
 
 1. **环境准备**
    - 安装 [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 或 Anaconda。
