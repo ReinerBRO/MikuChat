@@ -99,23 +99,18 @@
    pip install -r requirements.txt
    ```
 
-3. **下载模型**
+ 3. **下载权重文件 (必需)**
    
-   **方式 A：自动下载基础模型**
-   使用内置脚本下载 GPT-SoVITS 基础通用模型：
-   ```bash
-   python download_base_models_v2.py
-   ```
-
-   **方式 B：下载 Miku 专属权重 (必需)**
-   由于模型文件较大，请从网盘下载 Miku 的微调权重文件：
+   由于 GitHub 无法存储大体积模型，请从网盘下载整理好的资源包：
    
    > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1d6AIcaCq6MrEWXvmA_bfOg?pwd=3939) (提取码: 3939)
    
-   网盘中包含 `MikuModel` 文件夹。下载后，请将文件夹内的两个模型文件（`.ckpt` 和 `.pth`）复制到以下目录：
-   `backend/models/gpt_sovits/miku/weights/`
-   
-   - (参考音频 `reference` 已包含在项目中，无需下载)
+   **使用方法：**
+   1. 将网盘中的 `backend` 文件夹完整下载。
+   2. 直接将其拖入项目根目录中，与现有的 `backend` 文件夹进行 **合并/覆盖**。
+   3. **结果**：这会自动补全 `Miku 专属权重`、`基础底模` 以及 `G2PW 文本模型`。
+
+   *(注：你也可以运行 `python backend/download_base_models_v2.py` 自动下载部分通用底模，但手动从网盘覆盖是最全、最稳妥的方式)*
 
 4. **前端构建 (重要)**
    桌面模式需要预先构建前端：
