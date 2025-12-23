@@ -103,7 +103,7 @@
    
    由于 GitHub 无法存储大体积模型，请从网盘下载整理好的资源包：
    
-   > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1d6AIcaCq6MrEWXvmA_bfOg?pwd=3939) (提取码: 3939)
+   > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1kYebQjPUFR6VDjvKzu-Q_w?pwd=3939) (提取码: 3939)
    
    **使用方法：**
    1. 将网盘中的 `backend` 文件夹完整下载。
