@@ -111,9 +111,25 @@
 
 如果你是 Windows 用户，可以使用我们提供的一键安装脚本：
 
-1. **准备工作**：确保已安装 [Miniconda](https://docs.conda.io/en/latest/miniconda.html) 和 [Node.js](https://nodejs.org/)。
-2. **运行脚本**：双击项目根目录下的 **`setup_windows.bat`**。
-3. **效果**：脚本会自动创建 `mikuchat` 环境、安装所有依赖并完成前端构建。
+1. **运行脚本**：双击项目根目录下的 **`setup_windows.bat`**
+2. **全自动安装**：脚本会自动检测并安装以下依赖（如果未安装）：
+   - Miniconda (Python 环境管理)
+   - Node.js (前端构建)
+3. **效果**：自动创建 `mikuchat` 环境、安装所有依赖并完成前端构建
+
+> [!NOTE]
+> 整个过程无需手动干预，适合新手用户。
+
+### 🍎 macOS 一键安装
+
+如果你是 macOS 用户，可以使用我们提供的一键安装脚本：
+
+1. **运行脚本**：在终端中执行 `chmod +x setup_macos.sh && ./setup_macos.sh`
+2. **全自动安装**：脚本会自动检测并安装以下依赖（如果未安装）：
+   - Homebrew (macOS 包管理器)
+   - Miniconda (Python 环境管理)
+   - Node.js (前端构建)
+3. **效果**：自动创建 `mikuchat` 环境、安装所有依赖并完成前端构建
 
 ---
 
