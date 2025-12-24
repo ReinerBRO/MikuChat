@@ -83,15 +83,7 @@
 
 ### 首次设置
 
-1. **配置后端环境**
-   ```bash
-   cd backend
-   conda create -n mikuchat python=3.10
-   conda activate mikuchat
-   pip install -r requirements.txt
-   ```
-
-2. **配置 API 密钥**
+1. **配置 API 密钥**
    
    本项目使用 [SiliconFlow](https://cloud.siliconflow.cn/i/5xh9b6hq) 提供的 API 服务（Qwen VL 模型）。
    
@@ -104,7 +96,7 @@
    3. 进入控制台 → **API 密钥** → **新建密钥**
    4. 复制生成的密钥，替换 `backend/.env` 文件中 `SILICONFLOW_API_KEY=` 后面的 `your-api-key-here`
 
-3. **下载权重文件 (必需)**
+2. **下载权重文件 (必需)**
    
    由于 GitHub 无法存储大体积模型，**不论使用哪种安装方式（一键安装或手动部署）或哪个平台（Windows/macOS）**，都必须从网盘下载模型资源包：
    
