@@ -69,7 +69,7 @@
 - Python 3.10+ (推荐使用 Conda 建立 `mikuchat` 环境)
 - Node.js 16+
 - DashScope API 密钥（用于 Qwen VL）
-- 显存/内存要求：建议至少 16GB RAM (Mac M 系列表现优异)
+- 显存/内存要求：建议至少 8GB RAM 
 - **PyTorch 版本**：项目默认使用 **CPU 版本 PyTorch**，以确保最大的兼容性和最简单的安装体验。
 
 > [!TIP]
@@ -227,4 +227,3 @@ MikuChat/
 
 ---
 
-用 💙 制作，献给 Miku 粉丝
