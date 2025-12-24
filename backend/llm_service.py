@@ -1,8 +1,8 @@
 import os
-import dashscope
-from dashscope import MultiModalConversation
+from openai import OpenAI
 from typing import Optional
 import tempfile
+import base64
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -10,12 +10,16 @@ load_dotenv()
 
 from memory_service import MemoryService
 
-# Configure API Key
-dashscope.api_key = os.getenv("DASHSCOPE_API_KEY")
+# Configure SiliconFlow API
+client = OpenAI(
+    base_url='https://api.siliconflow.cn/v1',
+    api_key=os.getenv("SILICONFLOW_API_KEY")
+)
 
 class LLMService:
     def __init__(self):
-        self.model = "qwen-vl-max"
+        self.model = "Qwen/Qwen3-VL-32B-Instruct"  # SiliconFlow 的 Qwen VL 模型
+        self.text_model = "Qwen/Qwen2.5-72B-Instruct"  # 纯文本对话模型
         self.memory_service = MemoryService()
         self.system_prompt_base = (
             "You are Hatsune Miku (初音ミク), the virtual singer. "
@@ -36,19 +40,15 @@ class LLMService:
 
     async def generate_session_name(self, prompt: str) -> str:
         """Generate a session name based on the first message"""
-        messages = [
-            {
-                "role": "user",
-                "content": [{"text": prompt}]
-            }
-        ]
-        
         try:
-            response = MultiModalConversation.call(model=self.model, messages=messages)
-            if response.status_code == 200:
-                return response.output.choices[0].message.content[0]["text"]
-            else:
-                return "New Chat"
+            response = client.chat.completions.create(
+                model=self.text_model,
+                messages=[
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=50
+            )
+            return response.choices[0].message.content.strip()
         except Exception as e:
             print(f"Error generating session name: {e}")
             return "New Chat"
@@ -67,10 +67,7 @@ class LLMService:
         full_system_prompt = self.system_prompt_base + memory_context
 
         messages = [
-            {
-                "role": "system",
-                "content": [{"text": full_system_prompt}]
-            }
+            {"role": "system", "content": full_system_prompt}
         ]
 
         # 2. Add short-term rolling history (last 3 messages)
@@ -79,42 +76,53 @@ class LLMService:
             role = "user" if msg["role"] == "user" else "assistant"
             messages.append({
                 "role": role,
-                "content": [{"text": msg["content"]}]
+                "content": msg["content"]
             })
-
-        user_content = [{"text": text}]
-        temp_file_path = None
 
         try:
             if image_data:
-                # Save bytes to a temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as temp_file:
-                    temp_file.write(image_data)
-                    temp_file_path = temp_file.name
+                # 使用 VL 模型处理图片
+                # 将图片转换为 base64
+                image_base64 = base64.b64encode(image_data).decode('utf-8')
                 
-                # Add image to content (using local file path)
-                user_content.append({"image": f"file://{temp_file_path}"})
-
-            messages.append({
-                "role": "user",
-                "content": user_content
-            })
-
-            response = MultiModalConversation.call(model=self.model, messages=messages)
-
-            if response.status_code == 200:
-                reply_text = response.output.choices[0].message.content[0]["text"]
-                # Save current exchange to long-term memory
-                await self.memory_service.add_memory(text, username)
-                await self.memory_service.add_memory(reply_text, username)
-                return reply_text
+                messages.append({
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": text},
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{image_base64}"
+                            }
+                        }
+                    ]
+                })
+                
+                response = client.chat.completions.create(
+                    model=self.model,  # VL 模型
+                    messages=messages,
+                    max_tokens=1024
+                )
             else:
-                return f"Error: {response.code} - {response.message}"
+                # 纯文本对话使用文本模型
+                messages.append({
+                    "role": "user",
+                    "content": text
+                })
+                
+                response = client.chat.completions.create(
+                    model=self.text_model,  # 文本模型
+                    messages=messages,
+                    max_tokens=1024
+                )
+
+            reply_text = response.choices[0].message.content
+            
+            # Save current exchange to long-term memory
+            await self.memory_service.add_memory(text, username)
+            await self.memory_service.add_memory(reply_text, username)
+            
+            return reply_text
 
         except Exception as e:
             return f"An error occurred: {str(e)}"
-        
-        finally:
-            # Clean up temp file
-            if temp_file_path and os.path.exists(temp_file_path):
-                os.remove(temp_file_path)

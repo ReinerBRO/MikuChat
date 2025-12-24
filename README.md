@@ -92,10 +92,17 @@
    ```
 
 2. **配置 API 密钥**
-   在 `backend` 目录下创建 `.env` 文件：
-   ```env
-   DASHSCOPE_API_KEY=your-api-key-here
-   ```
+   
+   本项目使用 [SiliconFlow](https://cloud.siliconflow.cn/i/5xh9b6hq) 提供的 API 服务（Qwen VL 模型）。
+   
+   > [!TIP]
+   > **新用户福利**：首次注册并实名认证后，SiliconFlow 将赠送 **14 元代金券**，按目前的模型价格，日常聊天可以用很久！
+   
+   **获取 API Key 步骤**：
+   1. 访问 [SiliconFlow 注册页面](https://cloud.siliconflow.cn/i/5xh9b6hq)
+   2. 注册账号并完成实名认证
+   3. 进入控制台 → **API 密钥** → **新建密钥**
+   4. 复制生成的密钥，替换 `backend/.env` 文件中 `SILICONFLOW_API_KEY=` 后面的 `your-api-key-here`
 
 3. **模型下载**
    项目需要 GPT-SoVITS 底模和 Miku 权重文件，请确保将其放置在 `backend/models/gpt_sovits/miku/weights/`。
