@@ -9,6 +9,23 @@ const AnimatedAvatar: React.FC<AnimatedAvatarProps> = ({ className }) => {
     const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
     const [isClicked, setIsClicked] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const [chatAvatarUrl, setChatAvatarUrl] = useState(() =>
+        localStorage.getItem('miku_chat_avatar_url') || '/miku_avatar_1.jpg'
+    );
+
+    // Listen for localStorage changes
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const url = localStorage.getItem('miku_chat_avatar_url');
+            if (url) setChatAvatarUrl(url);
+        };
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('focus', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('focus', handleStorageChange);
+        };
+    }, []);
 
     useEffect(() => {
         const handleMouseMove = (e: MouseEvent) => {
@@ -63,7 +80,7 @@ const AnimatedAvatar: React.FC<AnimatedAvatarProps> = ({ className }) => {
                 {/* Avatar Image */}
                 <div className="relative w-64 h-64 rounded-full overflow-hidden border-4 border-miku/30 shadow-lg shadow-miku/20">
                     <img
-                        src="/miku_avatar.png"
+                        src={chatAvatarUrl}
                         alt="Miku"
                         className="w-full h-full object-cover"
                     />

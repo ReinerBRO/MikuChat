@@ -39,7 +39,23 @@ const Settings: React.FC<SettingsProps> = ({
 }) => {
     const [editingUsername, setEditingUsername] = useState(false);
     const [newUsername, setNewUsername] = useState(currentUser);
-    const { affinity, negiCoins, mood } = useGame();
+    const { affinity, negiCoins } = useGame();
+
+    // Chat Avatar Selection (local state, synced via localStorage)
+    const [chatAvatarUrl, setChatAvatarUrl] = useState(() =>
+        localStorage.getItem('miku_chat_avatar_url') || '/miku_avatar_1.jpg'
+    );
+
+    const avatarOptions = [
+        { url: '/miku_avatar_1.jpg', name: '微笑' },
+        { url: '/miku_avatar_2.jpg', name: '和风' },
+        { url: '/miku_avatar_3.jpg', name: '思考' },
+    ];
+
+    const handleAvatarChange = (url: string) => {
+        setChatAvatarUrl(url);
+        localStorage.setItem('miku_chat_avatar_url', url);
+    };
 
     useEffect(() => {
         setNewUsername(currentUser);
@@ -58,7 +74,7 @@ const Settings: React.FC<SettingsProps> = ({
     };
 
     const handleResetGame = () => {
-        if (confirm("Are you sure you want to reset your relationship with Miku? This cannot be undone!")) {
+        if (confirm("确定要重置与 Miku 的关系吗？此操作无法撤销！")) {
             localStorage.removeItem('miku_game_state');
             window.location.reload();
         }
@@ -72,7 +88,7 @@ const Settings: React.FC<SettingsProps> = ({
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <Sliders size={20} className="text-miku" />
-                        Settings
+                        设置
                     </h2>
                     <button
                         onClick={onClose}
@@ -87,11 +103,11 @@ const Settings: React.FC<SettingsProps> = ({
                     <div>
                         <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3 flex items-center gap-2">
                             <User size={16} className="text-miku" />
-                            User Profile
+                            用户资料
                         </label>
-                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 space-y-3">
+                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 space-y-2">
                             <div>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">Username</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">用户名</span>
                                 {editingUsername ? (
                                     <div className="flex gap-2 mt-1">
                                         <input
@@ -105,13 +121,13 @@ const Settings: React.FC<SettingsProps> = ({
                                             onClick={handleSaveUsername}
                                             className="px-3 py-2 bg-miku text-white rounded-lg hover:bg-miku-dark transition-colors text-sm font-medium"
                                         >
-                                            Save
+                                            保存
                                         </button>
                                         <button
                                             onClick={handleCancelEdit}
                                             className="px-3 py-2 bg-slate-200 dark:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg hover:bg-slate-300 dark:hover:bg-slate-500 transition-colors text-sm font-medium"
                                         >
-                                            Cancel
+                                            取消
                                         </button>
                                     </div>
                                 ) : (
@@ -121,7 +137,7 @@ const Settings: React.FC<SettingsProps> = ({
                                             onClick={() => setEditingUsername(true)}
                                             className="text-xs text-miku hover:text-miku-dark transition-colors font-medium"
                                         >
-                                            Edit
+                                            编辑
                                         </button>
                                     </div>
                                 )}
@@ -134,34 +150,34 @@ const Settings: React.FC<SettingsProps> = ({
                                 className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors font-medium text-sm"
                             >
                                 <LogOut size={16} />
-                                Logout
+                                退出登录
                             </button>
                         </div>
                     </div>
 
                     {/* Game Data - New Section */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                            Game Data
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                            游戏数据
                         </label>
-                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-4 flex items-center justify-between">
+                        <div className="bg-slate-50 dark:bg-slate-700/50 rounded-xl p-3 flex items-center justify-between">
                             <div className="text-xs text-slate-500">
-                                <p>Affinity: {affinity}</p>
-                                <p>Coins: {negiCoins}</p>
+                                <p>好感度: {affinity}</p>
+                                <p>葱币: {negiCoins}</p>
                             </div>
                             <button
                                 onClick={handleResetGame}
                                 className="px-3 py-1.5 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition-colors"
                             >
-                                Reset Progress
+                                重置进度
                             </button>
                         </div>
                     </div>
 
                     {/* Theme Selection */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                            Theme
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                            主题
                         </label>
                         <div className="grid grid-cols-3 gap-3">
                             <button
@@ -172,7 +188,7 @@ const Settings: React.FC<SettingsProps> = ({
                                     }`}
                             >
                                 <Sun size={24} />
-                                <span className="text-xs font-medium">Light</span>
+                                <span className="text-xs font-medium">浅色</span>
                             </button>
                             <button
                                 onClick={() => onThemeChange('dark')}
@@ -182,7 +198,7 @@ const Settings: React.FC<SettingsProps> = ({
                                     }`}
                             >
                                 <Moon size={24} />
-                                <span className="text-xs font-medium">Dark</span>
+                                <span className="text-xs font-medium">深色</span>
                             </button>
                             <button
                                 onClick={() => onThemeChange('cyber')}
@@ -192,15 +208,15 @@ const Settings: React.FC<SettingsProps> = ({
                                     }`}
                             >
                                 <Monitor size={24} />
-                                <span className="text-xs font-medium">Cyber</span>
+                                <span className="text-xs font-medium">赛博</span>
                             </button>
                         </div>
                     </div>
 
                     {/* Background Opacity */}
                     <div>
-                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                            Background Opacity
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                            背景透明度
                         </label>
                         <input
                             type="range"
@@ -211,15 +227,15 @@ const Settings: React.FC<SettingsProps> = ({
                             className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-miku"
                         />
                         <div className="flex justify-between text-xs text-slate-400 mt-1">
-                            <span>Transparent</span>
-                            <span>Solid</span>
+                            <span>透明</span>
+                            <span>实色</span>
                         </div>
                     </div>
 
                     {/* Avatar Visibility */}
                     <div className="flex items-center justify-between">
                         <label className="text-sm font-medium text-slate-600 dark:text-slate-300">
-                            Show Avatar
+                            显示头像
                         </label>
                         <button
                             onClick={() => onShowAvatarChange(!showAvatar)}
@@ -233,11 +249,35 @@ const Settings: React.FC<SettingsProps> = ({
                         </button>
                     </div>
 
+                    {/* Chat Avatar Selection */}
+                    <div>
+                        <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                            聊天头像
+                        </label>
+                        <div className="flex gap-2">
+                            {avatarOptions.map((avatar) => (
+                                <button
+                                    key={avatar.url}
+                                    onClick={() => handleAvatarChange(avatar.url)}
+                                    className={`relative w-16 h-16 rounded-xl overflow-hidden border-2 transition-all ${chatAvatarUrl === avatar.url
+                                            ? 'border-miku ring-2 ring-miku/30 scale-105'
+                                            : 'border-slate-200 dark:border-slate-600 hover:border-miku/50'
+                                        }`}
+                                >
+                                    <img src={avatar.url} alt={avatar.name} className="w-full h-full object-cover" />
+                                    <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs py-0.5 text-center">
+                                        {avatar.name}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Avatar Mode */}
                     {showAvatar && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                                Avatar Style
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                头像风格
                             </label>
                             <div className="flex bg-slate-100 dark:bg-slate-700/50 rounded-xl p-1">
                                 <button
@@ -247,7 +287,7 @@ const Settings: React.FC<SettingsProps> = ({
                                         : 'text-slate-500 dark:text-slate-400 hover:text-slate-700'
                                         }`}
                                 >
-                                    Simple
+                                    简约
                                 </button>
                                 <button
                                     onClick={() => onAvatarModeChange('live2d')}
@@ -265,8 +305,8 @@ const Settings: React.FC<SettingsProps> = ({
                     {/* Custom Live2D Model URL */}
                     {showAvatar && avatarMode === 'live2d' && (
                         <div>
-                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3">
-                                Live2D Model URL
+                            <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
+                                Live2D 模型地址
                             </label>
                             <input
                                 type="text"
@@ -280,13 +320,13 @@ const Settings: React.FC<SettingsProps> = ({
                                     onClick={() => onLive2dModelUrlChange('/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json')}
                                     className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-miku hover:text-white transition-colors whitespace-nowrap"
                                 >
-                                    Miku (Local)
+                                    Miku (本地)
                                 </button>
                                 <button
                                     onClick={() => onLive2dModelUrlChange('https://raw.githubusercontent.com/guansss/pixi-live2d-display/master/test/assets/haru/haru_greeter_t03.model3.json')}
                                     className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-lg text-xs text-slate-600 dark:text-slate-400 hover:bg-miku hover:text-white transition-colors whitespace-nowrap"
                                 >
-                                    Haru (Test)
+                                    Haru (测试)
                                 </button>
                                 <button
                                     onClick={() => onLive2dModelUrlChange('https://cdn.jsdelivr.net/gh/guansss/pixi-live2d-display/test/assets/shizuku/shizuku.model.json')}
@@ -296,7 +336,7 @@ const Settings: React.FC<SettingsProps> = ({
                                 </button>
                             </div>
                             <p className="text-xs text-slate-400">
-                                Enter a direct link to a model.json or model3.json file.
+                                输入 model.json 或 model3.json 文件的直链地址
                             </p>
                         </div>
                     )}
@@ -307,7 +347,7 @@ const Settings: React.FC<SettingsProps> = ({
                         onClick={onClose}
                         className="px-4 py-2 bg-miku text-white rounded-xl hover:bg-miku-dark transition-colors font-medium"
                     >
-                        Done
+                        完成
                     </button>
                 </div>
             </div>

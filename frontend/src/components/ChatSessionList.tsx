@@ -58,7 +58,7 @@ const ChatSessionList: React.FC<ChatSessionListProps> = ({
                 className="w-full mb-4 p-3 bg-gradient-to-r from-miku to-blue-500 text-white rounded-xl flex items-center justify-center gap-2 hover:shadow-lg hover:shadow-miku/30 transition-all"
             >
                 <Plus size={20} />
-                <span className="font-medium">New Chat</span>
+                <span className="font-medium">新对话</span>
             </button>
 
             {/* Session List */}
@@ -71,8 +71,8 @@ const ChatSessionList: React.FC<ChatSessionListProps> = ({
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -20 }}
                             className={`group relative p-3 rounded-xl cursor-pointer transition-all ${activeSessionId === session.id
-                                    ? 'bg-miku/10 border border-miku/30 shadow-[0_0_15px_rgba(93,217,210,0.1)]'
-                                    : 'hover:bg-tech-panel/50 border border-transparent'
+                                ? 'bg-miku/10 border border-miku/30 shadow-[0_0_15px_rgba(93,217,210,0.1)]'
+                                : 'hover:bg-tech-panel/50 border border-transparent'
                                 }`}
                             onClick={() => onSelectSession(session.id)}
                         >
@@ -83,14 +83,14 @@ const ChatSessionList: React.FC<ChatSessionListProps> = ({
                                         {session.name}
                                     </h3>
                                     <p className="text-xs text-theme-muted mt-1">
-                                        {formatTime(session.last_message_at)} · {session.message_count} msgs
+                                        {formatTime(session.last_message_at)} · {session.message_count} 条消息
                                     </p>
                                 </div>
                                 <button
                                     onClick={(e) => handleDelete(session.id, e)}
                                     className={`opacity-0 group-hover:opacity-100 p-1 rounded transition-all ${deleteConfirm === session.id
-                                            ? 'bg-red-500 text-white'
-                                            : 'hover:bg-red-500/10 text-red-400'
+                                        ? 'bg-red-500 text-white'
+                                        : 'hover:bg-red-500/10 text-red-400'
                                         }`}
                                     title={deleteConfirm === session.id ? 'Click again to confirm' : 'Delete'}
                                 >

@@ -47,7 +47,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const [messages, setMessages] = useState<Message[]>([{
         id: 'welcome',
-        text: "Hello! I'm Miku. What shall we talk about today? 🎵",
+        text: "你好！我是Miku，今天想聊些什么呢？🎵",
         sender: 'miku',
         timestamp: new Date(),
     }]);
@@ -104,7 +104,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             } else {
                 setMessages([{
                     id: 'welcome',
-                    text: "Hello! I'm Miku. What shall we talk about today? 🎵",
+                    text: "你好！我是Miku，今天想聊些什么呢？🎵",
                     sender: 'miku',
                     timestamp: new Date(),
                 }]);
@@ -211,13 +211,32 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     const [avatarPanelCollapsed, setAvatarPanelCollapsed] = useState(() => {
         const saved = localStorage.getItem('miku_avatar_panel_collapsed');
-        return saved !== null ? saved === 'true' : true;
+        return saved !== null ? saved === 'true' : false;
     });
 
     const [avatarScale, setAvatarScale] = useState(() => {
         const saved = localStorage.getItem('miku_avatar_scale');
         return saved !== null ? parseFloat(saved) : 1.0;
     });
+
+    const [chatAvatarUrl, setChatAvatarUrl] = useState(() => {
+        return localStorage.getItem('miku_chat_avatar_url') || '/miku_avatar_1.jpg';
+    });
+
+    // Listen for localStorage changes (from Settings)
+    useEffect(() => {
+        const handleStorageChange = () => {
+            const url = localStorage.getItem('miku_chat_avatar_url');
+            if (url) setChatAvatarUrl(url);
+        };
+        window.addEventListener('storage', handleStorageChange);
+        // Also check on focus in case changed in same window
+        window.addEventListener('focus', handleStorageChange);
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('focus', handleStorageChange);
+        };
+    }, []);
 
     const handleToggleAvatarPanel = () => {
         const newState = !avatarPanelCollapsed;
@@ -422,14 +441,14 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 title="Show Avatar Panel"
                             >
                                 <span className="text-2xl">🎤</span>
-                                <span className="text-sm font-medium text-miku">Show Miku</span>
+                                <span className="text-sm font-medium text-miku">显示 Miku</span>
                             </button>
                         )}
                         <div className="w-12 h-12 rounded-full bg-miku border-2 border-white overflow-hidden relative">
-                            <img src="/miku_avatar.png" alt="Miku" className="w-full h-full object-cover" />
+                            <img src={chatAvatarUrl} alt="Miku" className="w-full h-full object-cover" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-display font-bold text-theme-text">Hatsune Miku</h1>
+                            <h1 className="text-xl font-display font-bold text-theme-text">初音ミク</h1>
                             <p className="text-xs text-miku-dark flex items-center gap-1">
                                 <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
                                 <span>{currentStatus.emoji}</span>

@@ -2,11 +2,11 @@ import React, { createContext, useContext, useState, useEffect, type ReactNode }
 
 // Definitions for levels
 export const AFFINITY_LEVELS = [
-    { level: 1, min: 0, title: 'Stranger', color: 'text-gray-400' },
-    { level: 2, min: 20, title: 'Acquaintance', color: 'text-blue-400' },
-    { level: 3, min: 50, title: 'Friend', color: 'text-green-400' },
-    { level: 4, min: 80, title: 'Bestie', color: 'text-pink-400' },
-    { level: 5, min: 100, title: 'Soulmate', color: 'text-red-500' }, // Endless
+    { level: 1, min: 0, title: '陌生人', color: 'text-gray-400' },
+    { level: 2, min: 20, title: '点头之交', color: 'text-blue-400' },
+    { level: 3, min: 50, title: '朋友', color: 'text-green-400' },
+    { level: 4, min: 80, title: '闺蜜', color: 'text-pink-400' },
+    { level: 5, min: 100, title: '灵魂伴侣', color: 'text-red-500' }, // Endless
 ];
 
 interface GameState {
@@ -44,7 +44,7 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 
 const INITIAL_STATE: GameState = {
     affinity: 0,
-    negiCoins: 10000, // BIG MONEY
+    negiCoins: 200, // Starting coins
     mood: 80,
     ownedItems: ['default_outfit', 'bedroom'],
     equippedItems: {
@@ -64,7 +64,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 return {
                     ...INITIAL_STATE,
                     ...parsed,
-                    negiCoins: 10000,
+                    negiCoins: 200,
                     ownedItems: ['default_outfit', 'bedroom'], // STRICT RESET
                     equippedItems: { outfit: 'default_outfit', background: 'bedroom' }
                 };
@@ -188,11 +188,11 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                     addAffinity(2);
                     addCoins(2);
                     changeMood(1);
-                    addNotification("Miku liked that! +2 Affinity", 'success');
+                    addNotification("Miku 很喜欢！好感度 +2", 'success');
                 } else {
                     addAffinity(-1);
                     changeMood(-2);
-                    addNotification("Miku is annoyed...", 'warning');
+                    addNotification("Miku 生气了...", 'warning');
                 }
                 break;
             case 'gift':

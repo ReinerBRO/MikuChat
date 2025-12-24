@@ -75,6 +75,8 @@ class RenameRequest(BaseModel):
 
 class UserConfig(BaseModel):
     username: str
+    password: Optional[str] = None
+    rememberMe: Optional[bool] = False
 
 @app.get("/")
 async def root():
@@ -83,19 +85,24 @@ async def root():
 # User Management Endpoints
 @app.get("/api/user")
 async def get_user():
-    """Get current user configuration"""
+    """Get current user configuration (for auto-login persistence)"""
     if os.path.exists(USER_CONFIG_FILE):
         try:
             with open(USER_CONFIG_FILE, "r") as f:
                 config = json.load(f)
-                return config
+                # Only return login info if rememberMe was set
+                if config.get("rememberMe", False):
+                    return config
+                else:
+                    # Return empty if not remember me
+                    return {}
         except json.JSONDecodeError:
             return {}
     return {}
 
 @app.post("/api/user")
 async def update_user(config: UserConfig):
-    """Update user configuration"""
+    """Update user configuration with login persistence"""
     with open(USER_CONFIG_FILE, "w") as f:
         json.dump(config.dict(), f)
     return config

@@ -20,8 +20,9 @@ function App() {
   const [theme, setTheme] = useState(() => localStorage.getItem('miku_theme') || 'light');
   const [bgOpacity, setBgOpacity] = useState(() => parseInt(localStorage.getItem('miku_bg_opacity') || '50'));
   const [showAvatar, setShowAvatar] = useState(() => localStorage.getItem('miku_show_avatar') !== 'false');
-  const [avatarMode, setAvatarMode] = useState<'simple' | 'live2d'>(() => (localStorage.getItem('miku_avatar_mode') as 'simple' | 'live2d') || 'simple');
+  const [avatarMode, setAvatarMode] = useState<'simple' | 'live2d'>(() => (localStorage.getItem('miku_avatar_mode') as 'simple' | 'live2d') || 'live2d');
   const [live2dModelUrl, setLive2dModelUrl] = useState(() => localStorage.getItem('miku_live2d_model_url') || '/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json');
+  const [chatAvatarUrl, setChatAvatarUrl] = useState(() => localStorage.getItem('miku_chat_avatar_url') || '/miku_avatar_1.jpg');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -44,7 +45,8 @@ function App() {
     localStorage.setItem('miku_show_avatar', showAvatar.toString());
     localStorage.setItem('miku_avatar_mode', avatarMode);
     localStorage.setItem('miku_live2d_model_url', live2dModelUrl);
-  }, [theme, bgOpacity, showAvatar, avatarMode, live2dModelUrl]);
+    localStorage.setItem('miku_chat_avatar_url', chatAvatarUrl);
+  }, [theme, bgOpacity, showAvatar, avatarMode, live2dModelUrl, chatAvatarUrl]);
 
   // Auto-migrate to local model if using the old broken CDN
   useEffect(() => {
@@ -55,15 +57,35 @@ function App() {
   }, [live2dModelUrl]);
 
   useEffect(() => {
-    // Check for auto-login
-    const savedUser = localStorage.getItem('miku_user');
-    const savedPassword = localStorage.getItem('miku_password');
-    const rememberMe = localStorage.getItem('miku_remember_me') === 'true';
+    // Check for auto-login via backend API (file-based persistence)
+    const checkAutoLogin = async () => {
+      try {
+        const response = await fetch('/api/user');
+        const data = await response.json();
 
-    if (savedUser && savedPassword && rememberMe) {
-      setCurrentUser(savedUser);
-      setIsAuthenticated(true);
-    }
+        console.log('[DEBUG] Auto-login API check:', {
+          hasUsername: !!data.username,
+          hasPassword: !!data.password,
+          rememberMe: data.rememberMe
+        });
+
+        if (data.username && data.password && data.rememberMe) {
+          console.log('[DEBUG] Auto-login 成功，用户:', data.username);
+          setCurrentUser(data.username);
+          setIsAuthenticated(true);
+          // Also sync to localStorage for other features
+          localStorage.setItem('miku_user', data.username);
+          localStorage.setItem('miku_password', data.password);
+          localStorage.setItem('miku_remember_me', 'true');
+        } else {
+          console.log('[DEBUG] Auto-login 条件不满足');
+        }
+      } catch (error) {
+        console.log('[DEBUG] Auto-login API 请求失败:', error);
+      }
+    };
+
+    checkAutoLogin();
   }, []);
 
   // Load sessions when user is authenticated
@@ -142,16 +164,27 @@ function App() {
     setCurrentUser(username);
     setIsAuthenticated(true);
 
+    console.log('[DEBUG] 登录处理，rememberMe =', rememberMe);
+
+    // Save to localStorage for compatibility
+    localStorage.setItem('miku_user', username);
+    localStorage.setItem('miku_password', password);
     if (rememberMe) {
-      localStorage.setItem('miku_user', username);
-      localStorage.setItem('miku_password', password);
       localStorage.setItem('miku_remember_me', 'true');
     } else {
-      // Still save credentials for session validation, but don't auto-login
-      localStorage.setItem('miku_user', username);
-      localStorage.setItem('miku_password', password);
       localStorage.removeItem('miku_remember_me');
     }
+
+    // Save to backend API for file-based persistence (works across app restarts)
+    fetch('/api/user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password, rememberMe })
+    }).then(() => {
+      console.log('[DEBUG] 已保存登录信息到后端文件');
+    }).catch(err => {
+      console.log('[DEBUG] 后端保存失败:', err);
+    });
 
     return { success: true };
   };
