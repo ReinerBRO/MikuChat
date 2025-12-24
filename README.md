@@ -104,8 +104,18 @@
    3. 进入控制台 → **API 密钥** → **新建密钥**
    4. 复制生成的密钥，替换 `backend/.env` 文件中 `SILICONFLOW_API_KEY=` 后面的 `your-api-key-here`
 
-3. **模型下载**
-   项目需要 GPT-SoVITS 底模和 Miku 权重文件，请确保将其放置在 `backend/models/gpt_sovits/miku/weights/`。
+3. **下载权重文件 (必需)**
+   
+   由于 GitHub 无法存储大体积模型，**不论使用哪种安装方式（一键安装或手动部署）或哪个平台（Windows/macOS）**，都必须从网盘下载模型资源包：
+   
+   > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1kYebQjPUFR6VDjvKzu-Q_w?pwd=3939) (提取码: 3939)
+   
+   **安装方法：**
+   1. 将网盘中的 `backend` 文件夹完整下载。
+   2. 直接将其拖入项目根目录中，与现有的 `backend` 文件夹进行 **合并/覆盖**。
+   3. **结果**：这会自动补全 `Miku 专属权重`、`基础底模` 以及 `G2PW 文本模型`。
+   
+   *(注：你也可以运行 `python backend/download_base_models_v2.py` 自动下载部分通用底模，但手动从网盘覆盖是最全、最稳妥的方式)*
 
 ### ⚡ Windows 一键安装 (推荐)
 
@@ -146,30 +156,6 @@
    git clone https://github.com/ReinerBRO/MikuChat.git
    cd MikuChat/backend
    conda create -n mikuchat python=3.10
-   conda activate mikuchat
-   # 建议先手动安装 numpy 以避免依赖冲突
-   pip install numpy==1.26.4
-   pip install -r requirements.txt
-   ```
-
- 3. **下载权重文件 (必需)**
-   
-   由于 GitHub 无法存储大体积模型，请从网盘下载整理好的资源包：
-   
-   > 🔗 **百度网盘下载**: [点击跳转](https://pan.baidu.com/s/1kYebQjPUFR6VDjvKzu-Q_w?pwd=3939) (提取码: 3939)
-   
-   **使用方法：**
-   1. 将网盘中的 `backend` 文件夹完整下载。
-   2. 直接将其拖入项目根目录中，与现有的 `backend` 文件夹进行 **合并/覆盖**。
-   3. **结果**：这会自动补全 `Miku 专属权重`、`基础底模` 以及 `G2PW 文本模型`。
-
-   *(注：你也可以运行 `python backend/download_base_models_v2.py` 自动下载部分通用底模，但手动从网盘覆盖是最全、最稳妥的方式)*
-
-4. **前端构建 (重要)**
-   桌面模式需要预先构建前端：
-   ```bash
-   cd ../frontend
-   npm install
    # 如果 npm run build 因为类型错误失败，请使用以下命令跳过检查直接构建：
    npx vite build
    ```

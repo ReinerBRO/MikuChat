@@ -123,6 +123,11 @@ if __name__ == "__main__":
         sys.exit(1)
     
     print("✅ 后端已就绪，正在打开 MikuChat App 界面...")
+    
+    # 设置持久化存储目录，确保 localStorage 在重启后保留
+    storage_path = os.path.join(BASE_DIR, ".miku_data")
+    os.makedirs(storage_path, exist_ok=True)
+    
     window = webview.create_window(
         title='MikuChat',
         url='http://127.0.0.1:8000',
@@ -132,4 +137,4 @@ if __name__ == "__main__":
         background_color='#f0fdfa'
     )
     
-    webview.start(debug=True)
+    webview.start(debug=True, storage_path=storage_path)
