@@ -60,6 +60,16 @@
 - Node.js 16+
 - DashScope API 密钥（用于 Qwen VL）
 - 显存/内存要求：建议至少 16GB RAM (Mac M 系列表现优异)
+- **PyTorch 版本**：项目默认使用 **CPU 版本 PyTorch**，以确保最大的兼容性和最简单的安装体验。
+
+> [!TIP]
+> **NVIDIA GPU 用户可选加速**：如果你有 NVIDIA 显卡并希望加速语音生成，可以手动安装 CUDA 版本的 PyTorch（使用清华源加速下载）：
+> ```bash
+> pip uninstall torch torchvision torchaudio -y
+> pip install torch torchvision torchaudio -i https://pypi.tuna.tsinghua.edu.cn/simple
+> ```
+> 
+> ⚠️ **注意**：CUDA 版本可能存在与本地 CUDA 驱动版本不匹配的问题。如果遇到 GPU 相关错误，建议回退到 CPU 版本或参考 [PyTorch 官网](https://pytorch.org/get-started/locally/) 选择适合你显卡驱动的版本。
 
 ### 首次设置
 

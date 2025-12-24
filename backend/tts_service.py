@@ -43,6 +43,11 @@ os.environ["sovits_path"] = SOVITS_WEIGHTS
 os.environ["is_half"] = "False" 
 os.environ["device"] = DEVICE
 
+# Set BERT and CNHubert paths dynamically (relative to project structure)
+PRETRAINED_MODELS_DIR = os.path.join(GSV_SUB_DIR, "pretrained_models")
+os.environ["bert_path"] = os.path.join(PRETRAINED_MODELS_DIR, "chinese-roberta-wwm-ext-large")
+os.environ["cnhubert_base_path"] = os.path.join(PRETRAINED_MODELS_DIR, "chinese-hubert-base")
+
 _initialized = False
 
 def init_gsv():

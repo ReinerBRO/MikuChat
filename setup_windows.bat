@@ -37,6 +37,16 @@ call %CONDA_PATH% mikuchat
 echo 正在安装后端依赖 (这可能需要几分钟)...
 cd backend
 pip install numpy==1.26.4
+pip install psutil==7.1.3
+pip install gradio==6.1.0
+pip install x_transformers==2.11.24
+pip install pytorch_lightning==2.6.0
+pip install matplotlib==3.10.0
+pip install peft==0.18.0
+pip install wordsegment==1.3.1
+pip install g2p_en==2.1.0
+echo 正在下载 NLTK 数据包...
+python -c "import nltk; nltk.download('averaged_perceptron_tagger_eng')"
 pip install -r requirements.txt
 if %ERRORLEVEL% neq 0 (
     echo [错误] 后端依赖安装失败。
