@@ -116,4 +116,4 @@ if __name__ == "__main__":
         background_color='#f0fdfa'
     )
     
-    webview.start(debug=True)
+    webview.start(debug=False)
