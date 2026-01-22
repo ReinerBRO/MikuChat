@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Disc, Play, Pause, SkipForward, SkipBack, Music, Search, Globe, Folder, Volume2, VolumeX, Upload, X } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Music, Search, Volume2, VolumeX, Upload, X, Trash2 } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 interface Song {
@@ -15,18 +15,18 @@ interface Song {
 
 interface MusicPlayerProps {
     viewMode: 'mini' | 'full';
-    onToggleView?: () => void;
 }
 
-const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => {
+const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode }) => {
     const { playVoice } = useGame();
-    const [songs, setSongs] = useState<Song[]>([]);
-    const [currentSongIndex, setCurrentSongIndex] = useState<number>(-1);
+    const [localSongs, setLocalSongs] = useState<Song[]>([]);
+    const [onlineSongs, setOnlineSongs] = useState<Song[]>([]);
+    const [currentLocalIndex, setCurrentLocalIndex] = useState<number>(-1);
+    const [currentOnlineIndex, setCurrentOnlineIndex] = useState<number>(-1);
     const [isPlaying, setIsPlaying] = useState(false);
     const [mode, setMode] = useState<'local' | 'online'>('local');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Song[]>([]);
-    const [isSearching, setIsSearching] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [isMuted, setIsMuted] = useState(false);
 
@@ -35,8 +35,121 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
     const [uploadFile, setUploadFile] = useState<File | null>(null);
     const [uploadCover, setUploadCover] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [onlineHydrated, setOnlineHydrated] = useState(false);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
+    const onlinePlaylistKey = 'miku_online_playlist';
+    const onlineIndexKey = 'miku_online_playlist_index';
+    const getPlaylistUsername = () => localStorage.getItem('miku_user') || 'User';
+
+    const activeSongs = mode === 'local' ? localSongs : onlineSongs;
+    const activeIndex = mode === 'local' ? currentLocalIndex : currentOnlineIndex;
+
+    useEffect(() => {
+        const loadOnlinePlaylist = async () => {
+            let sanitized: Song[] = [];
+            let nextIndex = -1;
+
+            try {
+                const username = getPlaylistUsername();
+                const response = await fetch(`http://localhost:8000/api/music/online_playlist?username=${encodeURIComponent(username)}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (Array.isArray(data.songs)) {
+                        sanitized = data.songs
+                            .filter((item: any) => item && item.id && item.name)
+                            .map((item: any) => ({
+                                name: item.name,
+                                url: item.url || '',
+                                type: 'online',
+                                id: item.id,
+                                duration: item.duration,
+                                uploader: item.uploader,
+                                cover: item.cover
+                            }));
+                    }
+                    if (typeof data.current_index === 'number') {
+                        nextIndex = data.current_index;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to load online playlist from server:', error);
+            }
+
+            if (sanitized.length === 0) {
+                const saved = localStorage.getItem(onlinePlaylistKey);
+                if (saved) {
+                    try {
+                        const parsed = JSON.parse(saved);
+                        if (Array.isArray(parsed)) {
+                            sanitized = parsed
+                                .filter((item) => item && item.id && item.name)
+                                .map((item) => ({
+                                    name: item.name,
+                                    url: item.url || '',
+                                    type: 'online',
+                                    id: item.id,
+                                    duration: item.duration,
+                                    uploader: item.uploader,
+                                    cover: item.cover
+                                }));
+                        }
+                    } catch (error) {
+                        console.error('Failed to parse online playlist:', error);
+                    }
+                }
+            }
+
+            if (nextIndex === -1) {
+                const savedIndex = localStorage.getItem(onlineIndexKey);
+                const parsedIndex = savedIndex !== null ? Number.parseInt(savedIndex, 10) : -1;
+                nextIndex = parsedIndex;
+            }
+
+            const clampedIndex = sanitized.length > 0
+                ? Math.min(Number.isNaN(nextIndex) || nextIndex < 0 ? 0 : nextIndex, sanitized.length - 1)
+                : -1;
+
+            setOnlineSongs(sanitized);
+            setCurrentOnlineIndex(clampedIndex);
+            setOnlineHydrated(true);
+        };
+
+        loadOnlinePlaylist();
+    }, []);
+
+    useEffect(() => {
+        if (!onlineHydrated) return;
+        const nextIndex = onlineSongs.length > 0
+            ? Math.min(currentOnlineIndex === -1 ? 0 : currentOnlineIndex, onlineSongs.length - 1)
+            : -1;
+        if (nextIndex !== currentOnlineIndex) {
+            setCurrentOnlineIndex(nextIndex);
+            return;
+        }
+
+        localStorage.setItem(onlinePlaylistKey, JSON.stringify(onlineSongs));
+        localStorage.setItem(onlineIndexKey, nextIndex.toString());
+
+        const saveOnlinePlaylist = async () => {
+            try {
+                const username = getPlaylistUsername();
+                await fetch('http://localhost:8000/api/music/online_playlist', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username,
+                        songs: onlineSongs,
+                        current_index: nextIndex
+                    })
+                });
+            } catch (error) {
+                console.error('Failed to save online playlist:', error);
+            }
+        };
+
+        saveOnlinePlaylist();
+    }, [onlineSongs, currentOnlineIndex, onlineHydrated]);
 
     useEffect(() => {
         if (mode === 'local') {
@@ -45,9 +158,9 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
     }, [mode]);
 
     useEffect(() => {
-        if (currentSongIndex >= 0 && songs[currentSongIndex]) {
+        if (activeIndex >= 0 && activeSongs[activeIndex]) {
             if (audioRef.current) {
-                const song = songs[currentSongIndex];
+                const song = activeSongs[activeIndex];
                 if (song.type === 'online') {
                     audioRef.current.src = `http://localhost:8000/api/music/stream/${song.id}`;
                 } else {
@@ -59,7 +172,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                 }
             }
         }
-    }, [currentSongIndex, songs]);
+    }, [activeIndex, activeSongs]);
 
     useEffect(() => {
         if (audioRef.current) {
@@ -89,10 +202,12 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
             const response = await fetch('http://localhost:8000/api/music');
             const data = await response.json();
             if (data.music) {
-                setSongs(data.music);
-                if (currentSongIndex === -1 && data.music.length > 0) {
-                    setCurrentSongIndex(0);
-                }
+                setLocalSongs(data.music);
+                setCurrentLocalIndex((prev) => {
+                    if (data.music.length === 0) return -1;
+                    if (prev === -1) return 0;
+                    return Math.min(prev, data.music.length - 1);
+                });
             }
         } catch (error) {
             console.error('Error fetching music:', error);
@@ -103,7 +218,6 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
         e.preventDefault();
         if (!searchQuery.trim()) return;
 
-        setIsSearching(true);
         try {
             const response = await fetch(`http://localhost:8000/api/music/search?q=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
@@ -121,33 +235,49 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
             }
         } catch (error) {
             console.error('Search error:', error);
-        } finally {
-            setIsSearching(false);
         }
     };
 
     const playOnlineSong = (song: Song) => {
-        const existingIndex = songs.findIndex(s => s.id === song.id);
-        if (existingIndex !== -1) {
-            setCurrentSongIndex(existingIndex);
-        } else {
-            const newSongs = [...songs, song];
-            setSongs(newSongs);
-            setCurrentSongIndex(newSongs.length - 1);
-        }
+        setOnlineSongs((prev) => {
+            const existingIndex = prev.findIndex(s => s.id === song.id);
+            if (existingIndex !== -1) {
+                setCurrentOnlineIndex(existingIndex);
+                return prev;
+            }
+            const newSongs = [...prev, song];
+            setCurrentOnlineIndex(newSongs.length - 1);
+            return newSongs;
+        });
         setIsPlaying(true);
     };
 
     const togglePlay = () => setIsPlaying(!isPlaying);
 
+    const updateActiveIndex = (updater: (prev: number) => number) => {
+        if (mode === 'local') {
+            setCurrentLocalIndex(updater);
+        } else {
+            setCurrentOnlineIndex(updater);
+        }
+    };
+
+    const setActiveIndex = (index: number) => {
+        if (mode === 'local') {
+            setCurrentLocalIndex(index);
+        } else {
+            setCurrentOnlineIndex(index);
+        }
+    };
+
     const nextSong = () => {
-        if (songs.length === 0) return;
-        setCurrentSongIndex((prev) => (prev + 1) % songs.length);
+        if (activeSongs.length === 0) return;
+        updateActiveIndex((prev) => (prev + 1) % activeSongs.length);
     };
 
     const prevSong = () => {
-        if (songs.length === 0) return;
-        setCurrentSongIndex((prev) => (prev - 1 + songs.length) % songs.length);
+        if (activeSongs.length === 0) return;
+        updateActiveIndex((prev) => (prev - 1 + activeSongs.length) % activeSongs.length);
     };
 
     const handleEnded = () => nextSong();
@@ -183,6 +313,54 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
         }
     };
 
+    const removeSongAtIndex = (index: number, listType: 'local' | 'online') => {
+        const setList = listType === 'local' ? setLocalSongs : setOnlineSongs;
+        const setIndex = listType === 'local' ? setCurrentLocalIndex : setCurrentOnlineIndex;
+        setList(prev => {
+            const next = prev.filter((_, i) => i !== index);
+            setIndex(curr => {
+                if (curr === -1) return -1;
+                if (index < curr) return curr - 1;
+                if (index === curr) {
+                    return next.length ? Math.min(curr, next.length - 1) : -1;
+                }
+                return curr;
+            });
+            if (listType === mode && next.length === 0) {
+                setIsPlaying(false);
+            }
+            return next;
+        });
+    };
+
+    const deleteLocalSong = async (song: Song, index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (song.type !== 'local') return;
+        if (!window.confirm(`删除本地歌曲 "${song.name}"？`)) return;
+
+        try {
+            const response = await fetch(`http://localhost:8000/api/music/${encodeURIComponent(song.name)}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) {
+                console.error('Delete failed:', response.statusText);
+                return;
+            }
+
+            removeSongAtIndex(index, 'local');
+        } catch (error) {
+            console.error('Delete error:', error);
+        }
+    };
+
+    const removeOnlineSong = (song: Song, index: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (song.type !== 'online') return;
+        if (!window.confirm(`从列表移除 "${song.name}"？`)) return;
+        removeSongAtIndex(index, 'online');
+    };
+
     // Render Full View
     if (viewMode === 'full') {
         return (
@@ -205,7 +383,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                                 className="bg-white dark:bg-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl border border-white/20"
                             >
                                 <div className="flex justify-between items-center mb-4">
-                                    <h3 className="text-xl font-bold text-theme-text">Upload Music</h3>
+                                    <h3 className="text-xl font-bold text-theme-text">上传音乐</h3>
                                     <button onClick={() => setIsUploadModalOpen(false)} className="text-slate-400 hover:text-slate-600">
                                         <X size={20} />
                                     </button>
@@ -213,7 +391,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-500 mb-1">Music File (Required)</label>
+                                        <label className="block text-sm font-medium text-slate-500 mb-1">音乐文件（必选）</label>
                                         <input
                                             type="file"
                                             accept=".mp3,.wav,.ogg,.mp4,.m4a,.flac"
@@ -223,7 +401,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-500 mb-1">Cover Image (Optional)</label>
+                                        <label className="block text-sm font-medium text-slate-500 mb-1">封面图片（可选）</label>
                                         <input
                                             type="file"
                                             accept=".jpg,.jpeg,.png,.gif,.webp"
@@ -238,14 +416,14 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                                         onClick={() => setIsUploadModalOpen(false)}
                                         className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
                                     >
-                                        Cancel
+                                        取消
                                     </button>
                                     <button
                                         onClick={submitUpload}
                                         disabled={!uploadFile || isUploading}
                                         className="px-4 py-2 bg-miku text-white rounded-lg hover:bg-miku-dark disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
-                                        {isUploading ? 'Uploading...' : 'Upload'}
+                                        {isUploading ? '上传中...' : '上传'}
                                     </button>
                                 </div>
                             </motion.div>
@@ -255,21 +433,21 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
 
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-display font-bold text-theme-text flex items-center gap-2">
-                        <Music className="text-miku" /> Music Station
+                        <Music className="text-miku" /> 音乐站
                     </h2>
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => setIsUploadModalOpen(true)}
-                            className="flex items-center gap-2 px-3 py-1.5 bg-miku/10 text-miku hover:bg-miku/20 rounded-lg text-sm font-medium transition-colors"
-                        >
-                            <Upload size={16} /> Upload
-                        </button>
-                        <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
-                            <button onClick={() => setMode('local')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'local' ? 'bg-white dark:bg-slate-700 text-miku shadow-sm' : 'text-slate-500'}`}>Local</button>
-                            <button onClick={() => setMode('online')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'online' ? 'bg-white dark:bg-slate-700 text-miku shadow-sm' : 'text-slate-500'}`}>Online</button>
+                            <button
+                                onClick={() => setIsUploadModalOpen(true)}
+                                className="flex items-center gap-2 px-3 py-1.5 bg-miku/10 text-miku hover:bg-miku/20 rounded-lg text-sm font-medium transition-colors"
+                            >
+                                <Upload size={16} /> 上传
+                            </button>
+                            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-lg p-1">
+                                <button onClick={() => setMode('local')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'local' ? 'bg-white dark:bg-slate-700 text-miku shadow-sm' : 'text-slate-500'}`}>本地</button>
+                                <button onClick={() => setMode('online')} className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${mode === 'online' ? 'bg-white dark:bg-slate-700 text-miku shadow-sm' : 'text-slate-500'}`}>在线</button>
+                            </div>
                         </div>
                     </div>
-                </div>
 
                 <div className="flex-1 flex gap-6 min-h-0">
                     {/* Left: Player & Visuals */}
@@ -283,11 +461,11 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                                 }}
                             >
                                 <div className="w-24 h-24 rounded-full bg-miku flex items-center justify-center border-4 border-white overflow-hidden">
-                                    {songs[currentSongIndex]?.cover ? (
+                                    {activeSongs[activeIndex]?.cover ? (
                                         <img
-                                            src={songs[currentSongIndex].cover.startsWith('/music/')
-                                                ? `http://localhost:8000${songs[currentSongIndex].cover}`
-                                                : songs[currentSongIndex].cover}
+                                            src={activeSongs[activeIndex].cover.startsWith('/music/')
+                                                ? `http://localhost:8000${activeSongs[activeIndex].cover}`
+                                                : activeSongs[activeIndex].cover}
                                             alt="Cover"
                                             className="w-full h-full object-cover"
                                         />
@@ -301,8 +479,8 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                         </div>
 
                         <div className="text-center mb-6 w-full">
-                            <h3 className="text-xl font-bold text-theme-text truncate">{songs[currentSongIndex]?.name || "No Song Selected"}</h3>
-                            <p className="text-sm text-theme-muted truncate">{songs[currentSongIndex]?.uploader || "Unknown Artist"}</p>
+                            <h3 className="text-xl font-bold text-theme-text truncate">{activeSongs[activeIndex]?.name || "No Song Selected"}</h3>
+                            <p className="text-sm text-theme-muted truncate">{activeSongs[activeIndex]?.uploader || "Unknown Artist"}</p>
                         </div>
 
                         {/* Controls */}
@@ -343,7 +521,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                                         type="text"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        placeholder="Search Bilibili..."
+                                        placeholder="搜索 Bilibili..."
                                         className="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-miku focus:ring-2 focus:ring-miku/20 outline-none bg-white/50"
                                     />
                                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
@@ -380,30 +558,50 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                         )}
 
                         <div className="flex-1 overflow-y-auto custom-scrollbar bg-white/50 rounded-2xl p-2">
-                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">Current Playlist</h3>
-                            {songs.length === 0 ? (
-                                <div className="text-center py-10 text-slate-400">No songs in playlist</div>
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2 px-2">当前播放列表</h3>
+                            {activeSongs.length === 0 ? (
+                                <div className="text-center py-10 text-slate-400">播放列表为空</div>
                             ) : (
                                 <div className="space-y-1">
-                                    {songs.map((song, index) => (
+                                    {activeSongs.map((song, index) => (
                                         <div
                                             key={index}
-                                            onClick={() => { setCurrentSongIndex(index); setIsPlaying(true); }}
-                                            className={`p-3 rounded-xl cursor-pointer transition-all flex items-center gap-3 ${currentSongIndex === index ? 'bg-miku text-white shadow-md' : 'hover:bg-white/60 text-slate-700'
+                                            onClick={() => { setActiveIndex(index); setIsPlaying(true); }}
+                                            className={`p-3 rounded-xl cursor-pointer transition-all flex items-center gap-3 ${activeIndex === index ? 'bg-miku text-white shadow-md' : 'hover:bg-white/60 text-slate-700'
                                                 }`}
                                         >
                                             <div className="w-6 text-center text-xs opacity-70">{index + 1}</div>
                                             <div className="flex-1 min-w-0">
                                                 <div className="font-medium truncate">{song.name}</div>
-                                                <div className={`text-xs truncate ${currentSongIndex === index ? 'text-white/80' : 'text-slate-400'}`}>{song.uploader || 'Unknown'}</div>
+                                                <div className={`text-xs truncate ${activeIndex === index ? 'text-white/80' : 'text-slate-400'}`}>{song.uploader || 'Unknown'}</div>
                                             </div>
-                                            {currentSongIndex === index && isPlaying && (
-                                                <div className="flex gap-0.5 items-end h-3">
-                                                    <div className="w-1 bg-white animate-[music-bar_0.5s_ease-in-out_infinite]" />
-                                                    <div className="w-1 bg-white animate-[music-bar_0.7s_ease-in-out_infinite]" />
-                                                    <div className="w-1 bg-white animate-[music-bar_0.4s_ease-in-out_infinite]" />
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2">
+                                                {activeIndex === index && isPlaying && (
+                                                    <div className="flex gap-0.5 items-end h-3">
+                                                        <div className="w-1 bg-white animate-[music-bar_0.5s_ease-in-out_infinite]" />
+                                                        <div className="w-1 bg-white animate-[music-bar_0.7s_ease-in-out_infinite]" />
+                                                        <div className="w-1 bg-white animate-[music-bar_0.4s_ease-in-out_infinite]" />
+                                                    </div>
+                                                )}
+                                                {song.type === 'local' && (
+                                                    <button
+                                                        onClick={(e) => deleteLocalSong(song, index, e)}
+                                                        className={`p-1 rounded transition-colors ${activeIndex === index ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500 hover:bg-red-500/10'}`}
+                                                        title="删除本地歌曲"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                                {song.type === 'online' && (
+                                                    <button
+                                                        onClick={(e) => removeOnlineSong(song, index, e)}
+                                                        className={`p-1 rounded transition-colors ${activeIndex === index ? 'text-white/80 hover:text-white' : 'text-slate-400 hover:text-red-500 hover:bg-red-500/10'}`}
+                                                        title="从列表移除"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
@@ -439,7 +637,7 @@ const MusicPlayer: React.FC<MusicPlayerProps> = ({ viewMode, onToggleView }) => 
                 </motion.div>
 
                 <div className="flex flex-col max-w-[120px]">
-                    <span className="text-xs font-bold text-slate-700 truncate">{songs[currentSongIndex]?.name || "Miku Player"}</span>
+                    <span className="text-xs font-bold text-slate-700 truncate">{activeSongs[activeIndex]?.name || "Miku Player"}</span>
                     <span className="text-xs text-slate-400 truncate font-mono">{isPlaying ? "NOW PLAYING" : "PAUSED"}</span>
                 </div>
 

@@ -5,7 +5,7 @@ import Live2DAvatar from './Live2DAvatar';
 import CyberVisualizer from './CyberVisualizer';
 import ErrorBoundary from './ErrorBoundary';
 import { useGame } from '../context/GameContext';
-import { Send, Image as ImageIcon, Music, Palette, Home, Zap, Flower2, Lock } from 'lucide-react';
+import { Send, Image as ImageIcon, Music, Palette, Home, Zap, Flower2 } from 'lucide-react';
 
 interface Message {
     id: string;
@@ -63,7 +63,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         { text: '追剧中', emoji: '📺' },
         { text: '打游戏中', emoji: '🎮' },
         { text: '喝奶茶中', emoji: '🧋' },
-        { text: 'Online', emoji: '💚' }
+        { text: '在线', emoji: '💚' }
     ];
 
     const [currentStatus] = useState(() =>
@@ -192,7 +192,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             console.error("Error sending message:", error);
             const errorMessage: Message = {
                 id: Date.now().toString(),
-                text: "Gomenne! Server error. 😣",
+                text: "抱歉！服务器出错了。😣",
                 sender: 'miku',
                 timestamp: new Date(),
             };
@@ -289,7 +289,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             >
                                 <img
                                     src={backgrounds[currentBg] || backgrounds['bedroom']}
-                                    alt="Miku Room"
+                                    alt="Miku 房间"
                                     className="w-full h-full object-cover opacity-90 transition-transform duration-[20s] hover:scale-105"
                                 />
                                 <div className="absolute inset-0 bg-miku/5 mix-blend-overlay"></div>
@@ -319,7 +319,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         <button
                             onClick={handleToggleAvatarPanel}
                             className="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white text-miku rounded-lg transition-all z-40 shadow-sm border border-miku/20"
-                            title="Hide Avatar"
+                            title="隐藏 Miku"
                         >
                             <span className="font-bold text-lg">×</span>
                         </button>
@@ -329,7 +329,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             <button
                                 onClick={() => setShowBgSelector(!showBgSelector)}
                                 className="p-2 bg-white/50 hover:bg-white text-miku rounded-lg transition-all shadow-sm border border-miku/20"
-                                title="Change Background"
+                                title="更换背景"
                             >
                                 <Palette size={20} />
                             </button>
@@ -343,7 +343,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                         exit={{ opacity: 0, scale: 0.9, y: -10 }}
                                         className="absolute top-12 left-0 w-48 bg-white/95 backdrop-blur-md rounded-xl shadow-xl border border-miku/20 p-2 flex flex-col gap-2"
                                     >
-                                        <div className="text-xs font-bold text-slate-400 px-2 pb-1 border-b border-slate-100">BACKGROUNDS</div>
+                                        <div className="text-xs font-bold text-slate-400 px-2 pb-1 border-b border-slate-100">背景</div>
 
                                         {/* Bedroom (Always owned) */}
                                         <button
@@ -353,7 +353,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                             <div className="w-8 h-8 rounded bg-[#ccfbf1] flex items-center justify-center border border-miku/30">
                                                 <Home size={14} className="text-miku" />
                                             </div>
-                                            <span className="text-sm font-medium">Bedroom</span>
+                                            <span className="text-sm font-medium">卧室</span>
                                         </button>
 
                                         {/* Cyber Room */}
@@ -365,7 +365,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                                 <div className="w-8 h-8 rounded bg-cyan-900 flex items-center justify-center border border-cyan-500">
                                                     <Zap size={14} className="text-cyan-400" />
                                                 </div>
-                                                <span className="text-sm font-medium">Future Apt.</span>
+                                                <span className="text-sm font-medium">未来公寓</span>
                                             </button>
                                         ) : null}
 
@@ -378,13 +378,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                                 <div className="w-8 h-8 rounded bg-amber-900 flex items-center justify-center border border-amber-500">
                                                     <Flower2 size={14} className="text-amber-400" />
                                                 </div>
-                                                <span className="text-sm font-medium">Tea Room</span>
+                                                <span className="text-sm font-medium">茶室</span>
                                             </button>
                                         ) : null}
 
                                         {!ownedItems.includes('cyber_room') && !ownedItems.includes('japanese_room') && (
                                             <div className="p-2 text-xs text-slate-400 text-center italic">
-                                                Visit Shop to unlock more!
+                                                去商店解锁更多！
                                             </div>
                                         )}
                                     </motion.div>
@@ -412,7 +412,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             {/* Scale Slider */}
                             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[80%] opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0 pointer-events-auto">
                                 <div className="bg-white/80 backdrop-blur-md rounded-xl p-3 shadow-lg border border-miku/20 flex items-center gap-3">
-                                    <span className="text-xs font-bold text-miku whitespace-nowrap">SCALE</span>
+                                    <span className="text-xs font-bold text-miku whitespace-nowrap">缩放</span>
                                     <input
                                         type="range"
                                         min="0.5"
@@ -438,7 +438,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                             <button
                                 onClick={handleToggleAvatarPanel}
                                 className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-miku/20 to-blue-500/20 border-2 border-miku/50 rounded-xl hover:from-miku/30 hover:to-blue-500/30 hover:border-miku transition-all hover:scale-105 shadow-md"
-                                title="Show Avatar Panel"
+                                title="显示 Miku"
                             >
                                 <span className="text-2xl">🎤</span>
                                 <span className="text-sm font-medium text-miku">显示 Miku</span>
@@ -480,7 +480,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                                 }`}
                                         >
                                             {msg.image && (
-                                                <img src={msg.image} alt="Uploaded" className="max-w-full rounded-lg mb-2 border border-white/20" />
+                                                <img src={msg.image} alt="已上传" className="max-w-full rounded-lg mb-2 border border-white/20" />
                                             )}
                                             <p className="whitespace-pre-wrap">{msg.text}</p>
                                         </div>
@@ -504,7 +504,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 </div>
 
                 <div className="glass-panel rounded-2xl p-2 flex items-end gap-2 shrink-0 relative z-20">
-                    <button onClick={() => fileInputRef.current?.click()} className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl" title="Upload Image">
+                    <button onClick={() => fileInputRef.current?.click()} className="p-3 text-miku hover:text-miku-dark hover:bg-miku/10 rounded-xl" title="上传图片">
                         <ImageIcon size={20} />
                     </button>
                     <div className="relative group">
@@ -520,7 +520,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                 <button onClick={() => setSelectedImage(null)} className="text-red-400 hover:text-red-300">×</button>
                             </div>
                         )}
-                        <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyPress} placeholder="Type a message to Miku..." className="bg-transparent border-none focus:ring-0 text-theme-text resize-none h-10 max-h-32 py-2 px-1 w-full placeholder-theme-muted" rows={1} />
+                        <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} onKeyDown={handleKeyPress} placeholder="和 Miku 说点什么..." className="bg-transparent border-none focus:ring-0 text-theme-text resize-none h-10 max-h-32 py-2 px-1 w-full placeholder-theme-muted" rows={1} />
                     </div>
                     <button onClick={handleSendMessage} disabled={!inputText.trim() && !selectedImage} className="p-3 bg-gradient-to-r from-miku to-blue-500 rounded-xl text-white shadow-lg hover:shadow-miku/40 transform hover:-translate-y-1 transition-all disabled:opacity-50">
                         <Send size={20} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
 import DashboardLayout from './components/DashboardLayout';
 import Settings from './components/Settings';
@@ -22,7 +22,6 @@ function App() {
   const [showAvatar, setShowAvatar] = useState(() => localStorage.getItem('miku_show_avatar') !== 'false');
   const [avatarMode, setAvatarMode] = useState<'simple' | 'live2d'>(() => (localStorage.getItem('miku_avatar_mode') as 'simple' | 'live2d') || 'live2d');
   const [live2dModelUrl, setLive2dModelUrl] = useState(() => localStorage.getItem('miku_live2d_model_url') || '/live2d/miku/miku_pro_jp/runtime/miku_sample_t04.model3.json');
-  const [chatAvatarUrl, setChatAvatarUrl] = useState(() => localStorage.getItem('miku_chat_avatar_url') || '/miku_avatar_1.jpg');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [sessions, setSessions] = useState<ChatSession[]>([]);
@@ -45,8 +44,7 @@ function App() {
     localStorage.setItem('miku_show_avatar', showAvatar.toString());
     localStorage.setItem('miku_avatar_mode', avatarMode);
     localStorage.setItem('miku_live2d_model_url', live2dModelUrl);
-    localStorage.setItem('miku_chat_avatar_url', chatAvatarUrl);
-  }, [theme, bgOpacity, showAvatar, avatarMode, live2dModelUrl, chatAvatarUrl]);
+  }, [theme, bgOpacity, showAvatar, avatarMode, live2dModelUrl]);
 
   // Auto-migrate to local model if using the old broken CDN
   useEffect(() => {

@@ -84,7 +84,7 @@ const Settings: React.FC<SettingsProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md shadow-2xl border border-miku/30 animate-in fade-in zoom-in duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-6 w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl border border-miku/30 animate-in fade-in zoom-in duration-200">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
                         <Sliders size={20} className="text-miku" />
@@ -98,7 +98,7 @@ const Settings: React.FC<SettingsProps> = ({
                     </button>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto pr-2">
                     {/* User Profile */}
                     <div>
                         <label className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-3 flex items-center gap-2">
@@ -342,7 +342,7 @@ const Settings: React.FC<SettingsProps> = ({
                     )}
                 </div>
 
-                <div className="mt-8 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
+                <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 flex justify-end">
                     <button
                         onClick={onClose}
                         className="px-4 py-2 bg-miku text-white rounded-xl hover:bg-miku-dark transition-colors font-medium"

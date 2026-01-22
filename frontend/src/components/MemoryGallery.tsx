@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, Sparkles, BookHeart, Heart, ChevronLeft, ChevronRight, PenTool, Star, Music, Cloud, Clock, MessageCircle } from 'lucide-react';
+import { X, Calendar, Sparkles, BookHeart, Heart, ChevronLeft, ChevronRight, PenTool, Star, Cloud, Clock } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 
 interface Moment {

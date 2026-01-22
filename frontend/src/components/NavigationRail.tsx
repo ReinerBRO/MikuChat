@@ -1,4 +1,3 @@
-import React from 'react';
 import { MessageSquare, Music, Settings, LogOut, Newspaper, Box, ShoppingBag, BookHeart } from 'lucide-react';
 import { motion } from 'framer-motion';
 

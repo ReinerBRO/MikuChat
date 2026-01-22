@@ -7,6 +7,8 @@ yt-dlp
 requests
 python-dotenv
 openai==2.15.0
+langchain
+langchain-openai
 torch==2.9.1
 torchaudio==2.9.1
 librosa

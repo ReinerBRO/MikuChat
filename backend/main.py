@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import StreamingResponse
@@ -12,6 +12,7 @@ from llm_service import LLMService
 from chat_manager import ChatManager, ChatSession
 from image_service import ImageService
 from news_service import NewsService
+from weather_service import WeatherService
 
 from tts_service import generate_tts, init_gsv
 
@@ -42,8 +43,10 @@ llm_service = LLMService()
 chat_manager = ChatManager()
 image_service = ImageService()
 news_service = NewsService()
+weather_service = WeatherService()
 
 USER_CONFIG_FILE = "user_config.json"
+PLAYLISTS_DIR = "sessions"
 
 # Mount static directories
 os.makedirs("music", exist_ok=True)
@@ -78,6 +81,18 @@ class UserConfig(BaseModel):
     password: Optional[str] = None
     rememberMe: Optional[bool] = False
 
+class OnlinePlaylistRequest(BaseModel):
+    username: str
+    songs: List[dict] = []
+    current_index: int = -1
+
+def _get_online_playlist_path(username: str) -> str:
+    safe_username = "".join(c for c in username if c.isalnum() or c in ("_", "-"))
+    if not safe_username:
+        safe_username = "default"
+    os.makedirs(PLAYLISTS_DIR, exist_ok=True)
+    return os.path.join(PLAYLISTS_DIR, f"{safe_username}_online_playlist.json")
+
 @app.get("/")
 async def root():
     return {"message": "MikuChat Backend is running! 🎵"}
@@ -100,6 +115,12 @@ async def get_user():
             return {}
     return {}
 
+# Weather Tool
+@app.get("/api/weather")
+async def get_weather(city: Optional[str] = None, lat: Optional[float] = None, lon: Optional[float] = None, lang: str = "zh"):
+    """Fetch current weather by city or coordinates"""
+    return weather_service.get_weather(city=city, lat=lat, lon=lon, lang=lang)
+
 @app.post("/api/user")
 async def update_user(config: UserConfig):
     """Update user configuration with login persistence"""
@@ -107,7 +128,7 @@ async def update_user(config: UserConfig):
         json.dump(config.dict(), f)
     return config
 
-from urllib.parse import quote
+from urllib.parse import quote, unquote, urlparse
 
 
 # Music Endpoints
@@ -166,6 +187,70 @@ async def upload_music(file: UploadFile = File(...), cover: Optional[UploadFile]
     except Exception as e:
         print(f"Upload error: {e}")
         return {"error": str(e)}
+
+@app.get("/api/music/online_playlist")
+async def get_online_playlist(username: str):
+    """Load online playlist for a user"""
+    path = _get_online_playlist_path(username)
+    if not os.path.exists(path):
+        return {"songs": [], "current_index": -1}
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            songs = data.get("songs", [])
+            current_index = data.get("current_index", -1)
+            return {"songs": songs, "current_index": current_index}
+    except Exception as e:
+        print(f"Playlist load error: {e}")
+        return {"songs": [], "current_index": -1}
+
+@app.post("/api/music/online_playlist")
+async def save_online_playlist(payload: OnlinePlaylistRequest):
+    """Save online playlist for a user"""
+    path = _get_online_playlist_path(payload.username)
+    try:
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "songs": payload.songs,
+                    "current_index": payload.current_index
+                },
+                f,
+                ensure_ascii=False,
+                indent=2
+            )
+        return {"success": True}
+    except Exception as e:
+        print(f"Playlist save error: {e}")
+        return {"success": False, "error": str(e)}
+
+@app.delete("/api/music/{filename}")
+async def delete_music(filename: str):
+    """Delete a local music file and its cover"""
+    safe_name = os.path.basename(unquote(filename))
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Invalid filename")
+
+    allowed_audio = {".mp3", ".wav", ".ogg", ".mp4", ".m4a", ".flac"}
+    file_ext = os.path.splitext(safe_name)[1].lower()
+    if file_ext not in allowed_audio:
+        raise HTTPException(status_code=400, detail="Unsupported file type")
+
+    music_path = os.path.join("music", safe_name)
+    if not os.path.exists(music_path):
+        raise HTTPException(status_code=404, detail="File not found")
+
+    os.remove(music_path)
+
+    base_name = os.path.splitext(safe_name)[0]
+    deleted_covers = []
+    for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
+        cover_path = os.path.join("music", base_name + ext)
+        if os.path.exists(cover_path):
+            os.remove(cover_path)
+            deleted_covers.append(base_name + ext)
+
+    return {"success": True, "deleted": safe_name, "deleted_covers": deleted_covers}
 
 @app.get("/api/proxy/image")
 async def proxy_image(url: str):
@@ -264,8 +349,9 @@ async def search_music(q: str):
         return {"results": []}
 
 @app.get("/api/music/stream/{video_id}")
-async def stream_music(video_id: str):
+async def stream_music(video_id: str, request: Request):
     """Get streaming URL for a video"""
+    print(f"[music] stream request video_id={video_id} range={request.headers.get('range')}")
     ydl_opts = {
         'format': 'bestaudio/best',
         'quiet': True,
@@ -282,24 +368,116 @@ async def stream_music(video_id: str):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = await loop.run_in_executor(None, lambda: ydl.extract_info(url_to_extract, download=False))
-            url = info['url']
-            
-            # Proxy the stream to bypass Referer check
+            formats = info.get('formats') or []
+            audio_formats = [
+                f for f in formats
+                if f.get('vcodec') == 'none' and f.get('acodec') not in (None, 'none')
+            ]
+            direct_audio_formats = [
+                f for f in audio_formats
+                if f.get('protocol')
+                and f.get('protocol').lower().startswith('http')
+                and 'm3u8' not in f.get('protocol').lower()
+            ]
+            chosen_format = None
+            if direct_audio_formats:
+                chosen_format = max(direct_audio_formats, key=lambda f: f.get('abr') or f.get('tbr') or 0)
+            elif audio_formats:
+                chosen_format = max(audio_formats, key=lambda f: f.get('abr') or f.get('tbr') or 0)
+
+            if chosen_format:
+                print(
+                    "[music] chosen format",
+                    {
+                        "format_id": chosen_format.get("format_id"),
+                        "ext": chosen_format.get("ext"),
+                        "abr": chosen_format.get("abr"),
+                        "protocol": chosen_format.get("protocol"),
+                        "acodec": chosen_format.get("acodec"),
+                        "vcodec": chosen_format.get("vcodec"),
+                    },
+                )
+
+            url = (chosen_format or info).get('url')
+            if not url:
+                raise HTTPException(status_code=500, detail="No audio URL found")
+
+            # Proxy the stream to bypass Referer check and support Range requests.
             import requests
             from fastapi.responses import StreamingResponse
-            
-            # Bilibili requires Referer header
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
-                "Referer": "https://www.bilibili.com/"
-            }
-            
+
+            headers = dict((chosen_format or info).get('http_headers') or info.get('http_headers') or {})
+            headers.setdefault(
+                "User-Agent",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            )
+            headers.setdefault("Referer", "https://www.bilibili.com/")
+            headers.setdefault("Origin", "https://www.bilibili.com")
+
+            range_header = request.headers.get("range")
+            if range_header:
+                headers["Range"] = range_header
+
+            parsed = urlparse(url)
+            print(f"[music] upstream host={parsed.netloc}")
+            r = requests.get(url, headers=headers, stream=True, timeout=15)
+            if r.status_code >= 400:
+                print(f"[music] upstream error status={r.status_code} body={r.text[:200]}")
+                raise HTTPException(status_code=502, detail=f"Upstream status {r.status_code}")
+
             def iterfile():
-                with requests.get(url, headers=headers, stream=True) as r:
+                try:
                     for chunk in r.iter_content(chunk_size=8192):
-                        yield chunk
-                        
-            return StreamingResponse(iterfile(), media_type="audio/mp4")
+                        if chunk:
+                            yield chunk
+                finally:
+                    r.close()
+
+            response_headers = {}
+            for header_name in ("Content-Range", "Accept-Ranges", "Content-Length", "Content-Type"):
+                if header_name in r.headers:
+                    response_headers[header_name] = r.headers[header_name]
+
+            def guess_audio_mime(ext: Optional[str], acodec: Optional[str]) -> Optional[str]:
+                if ext:
+                    ext = ext.lower()
+                if ext in ("m4a", "mp4") or (acodec and acodec.startswith("mp4a")):
+                    return "audio/mp4"
+                if ext == "mp3":
+                    return "audio/mpeg"
+                if ext == "flac":
+                    return "audio/flac"
+                if ext in ("ogg", "opus"):
+                    return "audio/ogg"
+                if ext == "wav":
+                    return "audio/wav"
+                return None
+
+            guessed_mime = guess_audio_mime(
+                (chosen_format or info).get("ext"),
+                (chosen_format or info).get("acodec"),
+            )
+            media_type = guessed_mime or r.headers.get("Content-Type", "audio/mp4")
+            if guessed_mime:
+                response_headers["Content-Type"] = guessed_mime
+            if "Accept-Ranges" not in response_headers:
+                response_headers["Accept-Ranges"] = "bytes"
+            print(
+                "[music] upstream ok",
+                {
+                    "status": r.status_code,
+                    "content_type": r.headers.get("Content-Type"),
+                    "served_type": media_type,
+                    "content_length": r.headers.get("Content-Length"),
+                    "accept_ranges": r.headers.get("Accept-Ranges"),
+                },
+            )
+            return StreamingResponse(
+                iterfile(),
+                status_code=r.status_code,
+                media_type=media_type,
+                headers=response_headers
+            )
     except Exception as e:
         print(f"Stream error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
