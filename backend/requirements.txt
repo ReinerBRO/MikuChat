@@ -6,6 +6,7 @@ dashscope
 yt-dlp
 requests
 python-dotenv
+openai==2.15.0
 torch==2.9.1
 torchaudio==2.9.1
 librosa
