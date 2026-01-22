@@ -22,8 +22,8 @@ client = OpenAI(
 
 class LLMService:
     def __init__(self):
-        self.model = "Qwen/Qwen3-VL-32B-Instruct"  # SiliconFlow 的 Qwen VL 模型
-        self.text_model = "Qwen/Qwen2.5-72B-Instruct"  # 纯文本对话模型
+        self.model = "Qwen/Qwen3-VL-235B-A22B-Instruct"  # SiliconFlow 的 Qwen VL 模型
+        self.text_model = "Qwen/Qwen3-VL-235B-A22B-Instruct"  # 纯文本对话模型
         self.memory_service = MemoryService()
         self.weather_service = WeatherService()
         self.agent_llm = ChatOpenAI(

@@ -3,14 +3,20 @@ import json
 import uuid
 from datetime import datetime
 from typing import List, Dict, Optional
-import dashscope
-from dashscope import MultiModalConversation
+from dotenv import load_dotenv
+from openai import OpenAI
+
+load_dotenv()
 
 class GalleryService:
     def __init__(self, storage_dir: str = "sessions"):
         self.storage_dir = storage_dir
         os.makedirs(self.storage_dir, exist_ok=True)
-        self.model = "qwen-vl-max"
+        self.model = "Qwen/Qwen3-VL-235B-A22B-Instruct"
+        self.client = OpenAI(
+            base_url="https://api.siliconflow.cn/v1",
+            api_key=os.getenv("SILICONFLOW_API_KEY")
+        )
 
     def _get_gallery_path(self, username: str) -> str:
         safe_username = "".join(c for c in username if c.isalnum() or c in ('_', '-'))
@@ -71,25 +77,26 @@ class GalleryService:
         )
         
         try:
-            messages = [{"role": "user", "content": [{"text": prompt}]}]
-            response = MultiModalConversation.call(model=self.model, messages=messages)
-            
-            if response.status_code == 200:
-                result = response.output.choices[0].message.content[0]["text"].strip()
-                if "null" not in result.lower() and len(result) > 2:
-                    moment = {
-                        "id": str(uuid.uuid4()),
-                        "content": result.strip('"'),
-                        "timestamp": datetime.now().isoformat(),
-                        "importance": 1 # Placeholder
-                    }
-                    gallery["days"][today]["moments"].append(moment)
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=120
+            )
+            result = (response.choices[0].message.content or "").strip()
+            if "null" not in result.lower() and len(result) > 2:
+                moment = {
+                    "id": str(uuid.uuid4()),
+                    "content": result.strip('"'),
+                    "timestamp": datetime.now().isoformat(),
+                    "importance": 1 # Placeholder
+                }
+                gallery["days"][today]["moments"].append(moment)
+                
+                # Keep only last 10 for now if it grows
+                if len(gallery["days"][today]["moments"]) > 10:
+                    gallery["days"][today]["moments"] = gallery["days"][today]["moments"][-10:]
                     
-                    # Keep only last 10 for now if it grows
-                    if len(gallery["days"][today]["moments"]) > 10:
-                        gallery["days"][today]["moments"] = gallery["days"][today]["moments"][-10:]
-                        
-                    self._save_gallery(username, gallery)
+                self._save_gallery(username, gallery)
         except Exception as e:
             print(f"Error evaluating moment: {e}")
 
@@ -115,17 +122,19 @@ class GalleryService:
         )
         
         try:
-            messages = [{"role": "user", "content": [{"text": prompt}]}]
-            response = MultiModalConversation.call(model=self.model, messages=messages)
-            if response.status_code == 200:
-                summary = response.output.choices[0].message.content[0]["text"].strip()
-                gallery["days"][date_key]["summary"] = summary
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=120
+            )
+            summary = (response.choices[0].message.content or "").strip()
+            gallery["days"][date_key]["summary"] = summary
+            
+            # Prune to best 5 moments if there are more
+            if len(gallery["days"][date_key]["moments"]) > 5:
+                day_data["moments"] = day_data["moments"][-5:]
                 
-                # Prune to best 5 moments if there are more
-                if len(gallery["days"][date_key]["moments"]) > 5:
-                    day_data["moments"] = day_data["moments"][-5:]
-                    
-                self._save_gallery(username, gallery)
+            self._save_gallery(username, gallery)
         except Exception as e:
             print(f"Error generating daily summary: {e}")
 
