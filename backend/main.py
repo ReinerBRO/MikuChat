@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 import json
 import os
+import uuid
 import yt_dlp
 import asyncio
 from llm_service import LLMService
@@ -17,6 +18,13 @@ from weather_service import WeatherService
 from tts_service import generate_tts, init_gsv
 
 app = FastAPI(title="MikuChat API", description="Backend for MikuChat WebUI")
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(BACKEND_DIR)
+MUSIC_DIR = os.path.join(PROJECT_DIR, "music")
+STATIC_DIR = os.path.join(PROJECT_DIR, "static")
+AUDIO_DIR = os.path.join(STATIC_DIR, "audio")
+UPLOADS_DIR = os.path.join(STATIC_DIR, "uploads")
 
 # Startup event to warm up models
 @app.on_event("startup")
@@ -40,7 +48,7 @@ app.add_middleware(
 
 # Services and logic
 llm_service = LLMService()
-chat_manager = ChatManager()
+chat_manager = ChatManager(uploads_dir=UPLOADS_DIR)
 image_service = ImageService()
 news_service = NewsService()
 weather_service = WeatherService()
@@ -49,10 +57,11 @@ USER_CONFIG_FILE = "user_config.json"
 PLAYLISTS_DIR = "sessions"
 
 # Mount static directories
-os.makedirs("music", exist_ok=True)
-os.makedirs("static/audio", exist_ok=True)
-app.mount("/music", StaticFiles(directory="music"), name="music")
-app.mount("/static", StaticFiles(directory="static"), name="static")
+os.makedirs(MUSIC_DIR, exist_ok=True)
+os.makedirs(AUDIO_DIR, exist_ok=True)
+os.makedirs(UPLOADS_DIR, exist_ok=True)
+app.mount("/music", StaticFiles(directory=MUSIC_DIR), name="music")
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 
@@ -136,14 +145,14 @@ from urllib.parse import quote, unquote, urlparse
 async def list_music():
     """List available music files"""
     files = []
-    if os.path.exists("music"):
-        for file in os.listdir("music"):
+    if os.path.exists(MUSIC_DIR):
+        for file in os.listdir(MUSIC_DIR):
             if file.endswith((".mp3", ".wav", ".ogg", ".mp4", ".m4a", ".flac")):
                 # Check for cover image with same name
                 base_name = os.path.splitext(file)[0]
                 cover_url = None
                 for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
-                    if os.path.exists(os.path.join("music", base_name + ext)):
+                    if os.path.exists(os.path.join(MUSIC_DIR, base_name + ext)):
                         cover_url = f"/music/{quote(base_name + ext)}"
                         break
                 
@@ -166,7 +175,7 @@ async def upload_music(file: UploadFile = File(...), cover: Optional[UploadFile]
             return {"error": f"Invalid audio format. Allowed: {', '.join(allowed_audio)}"}
         
         # Save music file
-        music_path = os.path.join("music", file.filename)
+        music_path = os.path.join(MUSIC_DIR, file.filename)
         with open(music_path, "wb") as f:
             content = await file.read()
             f.write(content)
@@ -178,7 +187,7 @@ async def upload_music(file: UploadFile = File(...), cover: Optional[UploadFile]
             if cover_ext in allowed_images:
                 # Use same basename as music file
                 base_name = os.path.splitext(file.filename)[0]
-                cover_path = os.path.join("music", base_name + cover_ext)
+                cover_path = os.path.join(MUSIC_DIR, base_name + cover_ext)
                 with open(cover_path, "wb") as f:
                     content = await cover.read()
                     f.write(content)
@@ -236,7 +245,7 @@ async def delete_music(filename: str):
     if file_ext not in allowed_audio:
         raise HTTPException(status_code=400, detail="Unsupported file type")
 
-    music_path = os.path.join("music", safe_name)
+    music_path = os.path.join(MUSIC_DIR, safe_name)
     if not os.path.exists(music_path):
         raise HTTPException(status_code=404, detail="File not found")
 
@@ -245,7 +254,7 @@ async def delete_music(filename: str):
     base_name = os.path.splitext(safe_name)[0]
     deleted_covers = []
     for ext in [".jpg", ".jpeg", ".png", ".gif", ".webp"]:
-        cover_path = os.path.join("music", base_name + ext)
+        cover_path = os.path.join(MUSIC_DIR, base_name + ext)
         if os.path.exists(cover_path):
             os.remove(cover_path)
             deleted_covers.append(base_name + ext)
@@ -555,8 +564,18 @@ async def chat(
         session_id = await chat_manager.create_session(text, current_username)
     
     image_data = None
+    image_url = None
     if image:
         image_data = await image.read()
+        if image_data:
+            file_ext = os.path.splitext(image.filename or "")[1].lower()
+            if file_ext not in (".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"):
+                file_ext = ".png"
+            upload_name = f"{uuid.uuid4()}{file_ext}"
+            upload_path = os.path.join(UPLOADS_DIR, upload_name)
+            with open(upload_path, "wb") as f:
+                f.write(image_data)
+            image_url = f"/static/uploads/{upload_name}"
     
     try:
         history_list = json.loads(history)
@@ -570,11 +589,14 @@ async def chat(
     from datetime import datetime
     timestamp = datetime.now().isoformat()
     
-    chat_manager.add_message(session_id, {
+    user_message = {
         "role": "user",
         "content": text,
         "timestamp": timestamp
-    }, current_username)
+    }
+    if image_url:
+        user_message["image_url"] = image_url
+    chat_manager.add_message(session_id, user_message, current_username)
     chat_manager.add_message(session_id, {
         "role": "assistant",
         "content": response,

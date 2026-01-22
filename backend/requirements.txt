@@ -2,7 +2,6 @@ fastapi
 uvicorn
 python-multipart
 pydantic
-dashscope
 yt-dlp
 requests
 python-dotenv

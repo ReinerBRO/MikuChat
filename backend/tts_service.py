@@ -7,6 +7,7 @@ import re
 
 # Add GPT-SoVITS paths
 BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_DIR = os.path.dirname(BACKEND_DIR)
 GSV_CORE_DIR = os.path.join(BACKEND_DIR, "gpt_sovits_core")
 GSV_SUB_DIR = os.path.join(GSV_CORE_DIR, "GPT_SoVITS")
 
@@ -23,7 +24,7 @@ DEFAULT_REF_AUDIO = os.path.join(REF_AUDIO_DIR, "こんにちは、はずね�
 DEFAULT_REF_TEXT = "こんにちは、初音ミクです。こんばんは、初音ミクです。"
 DEFAULT_REF_LANG = "日文"
 
-AUDIO_DIR = os.path.join(BACKEND_DIR, "static/audio")
+AUDIO_DIR = os.path.join(PROJECT_DIR, "static", "audio")
 os.makedirs(AUDIO_DIR, exist_ok=True)
 
 # Device configuration (MPS for Mac, CUDA for Windows, CPU fallback)
@@ -147,6 +148,9 @@ async def generate_tts(text: str) -> str | None:
             emotion = found_tag
             # Remove tag from the text to be spoken
             clean_text = text.replace(f"[{found_tag}]", "").strip()
+
+    if not clean_text.strip():
+        return None
 
     ref_config = EMOTION_MAP.get(emotion, EMOTION_MAP["NORMAL"])
     ref_wav_path = os.path.join(REF_AUDIO_DIR, ref_config["wav"])

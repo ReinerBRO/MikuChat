@@ -2,16 +2,20 @@ import os
 import json
 import numpy as np
 from datetime import datetime
-import dashscope
-from dashscope import TextEmbedding
 from typing import List
+from dotenv import load_dotenv
+from openai import OpenAI
 
 class MemoryService:
     def __init__(self, storage_dir="sessions"):
         self.storage_dir = storage_dir
         os.makedirs(self.storage_dir, exist_ok=True)
-        # We use DashScope's text-embedding-v2
-        self.embedding_model = TextEmbedding.Models.text_embedding_v2
+        load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), ".env"))
+        self.embedding_model = os.getenv("SILICONFLOW_EMBEDDING_MODEL", "BAAI/bge-m3")
+        self.client = OpenAI(
+            base_url="https://api.siliconflow.cn/v1",
+            api_key=os.getenv("SILICONFLOW_API_KEY")
+        )
 
     def _get_memory_path(self, username: str) -> str:
         safe_username = "".join(c for c in username if c.isalnum() or c in ('_', '-'))
@@ -19,14 +23,9 @@ class MemoryService:
 
     async def get_embedding(self, text: str) -> List[float]:
         try:
-            # Note: DashScope call is blocking, but we wrap in async for consistency if needed
-            # In a real heavy app, use a thread pool. For MikuChat, it's fine.
-            resp = TextEmbedding.call(model=self.embedding_model, input=text)
-            if resp.status_code == 200:
-                return resp.output['embeddings'][0]['embedding']
-            else:
-                print(f"Embedding API error: {resp.code} - {resp.message}")
-                return []
+            # Note: This call is blocking; kept async for API consistency.
+            resp = self.client.embeddings.create(model=self.embedding_model, input=text)
+            return resp.data[0].embedding if resp.data else []
         except Exception as e:
             print(f"Embedding error: {e}")
             return []
@@ -77,10 +76,15 @@ class MemoryService:
             return []
             
         q_vec = np.array(query_emb)
+        q_dim = len(query_emb)
         scores = []
         
         for mem in memories:
-            m_vec = np.array(mem['embedding'])
+            embedding = mem.get("embedding")
+            if not isinstance(embedding, list) or len(embedding) != q_dim:
+                # Skip embeddings from older models with different dimensions.
+                continue
+            m_vec = np.array(embedding)
             # Cosine similarity
             norm_q = np.linalg.norm(q_vec)
             norm_m = np.linalg.norm(m_vec)

@@ -90,6 +90,19 @@ class LLMService:
             debug=False
         )
 
+    def _simple_chat_completion(self, system_prompt: str, short_history: list[dict], text: str) -> str:
+        messages = [{"role": "system", "content": system_prompt}]
+        for msg in short_history:
+            role = "user" if msg["role"] == "user" else "assistant"
+            messages.append({"role": role, "content": msg["content"]})
+        messages.append({"role": "user", "content": text})
+        response = client.chat.completions.create(
+            model=self.text_model,
+            messages=messages,
+            max_tokens=1024
+        )
+        return response.choices[0].message.content or ""
+
     async def generate_session_name(self, prompt: str) -> str:
         """Generate a session name based on the first message"""
         try:
@@ -109,6 +122,7 @@ class LLMService:
         """
         Generates a response from Qwen VL with rolling history and long-term memory.
         """
+        reply_text = ""
         # 1. Search Long-term Memories
         memories = await self.memory_service.search_memories(text, username, top_k=3)
         memory_context = ""
@@ -161,6 +175,7 @@ class LLMService:
                     messages=messages,
                     max_tokens=1024
                 )
+                reply_text = response.choices[0].message.content or ""
             else:
                 agent = self._build_agent(full_system_prompt)
                 result = agent.invoke({
@@ -168,14 +183,17 @@ class LLMService:
                 })
                 messages = result.get("messages", [])
                 if messages:
-                    last = messages[-1]
-                    reply_text = last.content if hasattr(last, "content") else str(last)
-                else:
-                    reply_text = ""
+                    for msg in reversed(messages):
+                        if isinstance(msg, AIMessage) and msg.content and msg.content.strip():
+                            reply_text = msg.content
+                            break
+                if not reply_text:
+                    reply_text = self._simple_chat_completion(full_system_prompt, short_history, text)
             
             # Save current exchange to long-term memory
             await self.memory_service.add_memory(text, username)
-            await self.memory_service.add_memory(reply_text, username)
+            if reply_text:
+                await self.memory_service.add_memory(reply_text, username)
             
             return reply_text
 

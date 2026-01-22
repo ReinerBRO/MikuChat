@@ -30,6 +30,13 @@ const cleanMessageText = (text: string) => {
     return text.replace(/^\[([a-zA-Z]+)\]\s*/i, '');
 };
 
+const resolveImageUrl = (url?: string) => {
+    if (!url) return undefined;
+    if (url.startsWith('blob:') || url.startsWith('data:')) return url;
+    if (url.startsWith('/static/')) return `http://localhost:8000${url}`;
+    return url;
+};
+
 const ChatInterface: React.FC<ChatInterfaceProps> = ({
     activeSessionId,
     onSessionCreated,
@@ -94,6 +101,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         id: `${activeSessionId}-${index}`,
                         text: cleanMessageText(msg.content),
                         sender: msg.role === 'user' ? 'user' : 'miku',
+                        image: msg.image_url || msg.image,
                         timestamp: new Date(msg.timestamp)
                     }));
                     setMessages(loadedMessages);
@@ -480,7 +488,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                                 }`}
                                         >
                                             {msg.image && (
-                                                <img src={msg.image} alt="已上传" className="max-w-full rounded-lg mb-2 border border-white/20" />
+                                                <img src={resolveImageUrl(msg.image)} alt="已上传" className="max-w-full rounded-lg mb-2 border border-white/20" />
                                             )}
                                             <p className="whitespace-pre-wrap">{msg.text}</p>
                                         </div>

@@ -20,8 +20,9 @@ class ChatSession:
             self.messages = []
 
 class ChatManager:
-    def __init__(self, storage_dir: str = "sessions"):
+    def __init__(self, storage_dir: str = "sessions", uploads_dir: Optional[str] = None):
         self.storage_dir = storage_dir
+        self.uploads_dir = uploads_dir
         self.sessions: Dict[str, ChatSession] = {}
         self.llm_service = LLMService()
         # Create storage directory if it doesn't exist
@@ -58,6 +59,43 @@ class ChatManager:
                 json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             print(f"Error saving sessions for {username}: {e}")
+
+    def _extract_upload_filename(self, image_url: Optional[str]) -> Optional[str]:
+        if not image_url:
+            return None
+        clean_url = image_url.split("?", 1)[0].split("#", 1)[0]
+        prefix = "/static/uploads/"
+        if not clean_url.startswith(prefix):
+            return None
+        filename = os.path.basename(clean_url)
+        if not filename or filename in (".", ".."):
+            return None
+        return filename
+
+    def _delete_upload_file(self, filename: str):
+        if not self.uploads_dir:
+            return
+        upload_root = os.path.abspath(self.uploads_dir)
+        file_path = os.path.abspath(os.path.join(upload_root, filename))
+        if os.path.commonpath([file_path, upload_root]) != upload_root:
+            return
+        try:
+            os.remove(file_path)
+        except FileNotFoundError:
+            pass
+        except Exception as e:
+            print(f"Error deleting upload {file_path}: {e}")
+
+    def _delete_session_images(self, session: ChatSession):
+        if not self.uploads_dir or not session:
+            return
+        filenames = set()
+        for message in session.messages or []:
+            filename = self._extract_upload_filename(message.get("image_url"))
+            if filename:
+                filenames.add(filename)
+        for filename in filenames:
+            self._delete_upload_file(filename)
     
     async def create_session(self, first_message: str, username: str) -> str:
         """Create a new session and generate name based on first message"""
@@ -106,6 +144,7 @@ class ChatManager:
     def delete_session(self, session_id: str, username: str) -> bool:
         """Delete a session"""
         if session_id in self.sessions:
+            self._delete_session_images(self.sessions[session_id])
             del self.sessions[session_id]
             self._save_sessions(username)
             return True
