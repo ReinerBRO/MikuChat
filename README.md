@@ -66,11 +66,14 @@
 ## 🚀 快速开始
 
 ### 前置要求
-- Python 3.10+ (推荐使用 Conda 建立 `mikuchat` 环境)
-- Node.js 16+
-- DashScope API 密钥（用于 Qwen VL）
+- Python 3.10+ (推荐使用 Conda 建立 `mikuchat` 环境；使用一键脚本时会自动安装)
+- Node.js 16+ (使用一键脚本时会自动安装)
+- SiliconFlow API 密钥（用于 Qwen VL）
 - 显存/内存要求：建议至少 8GB RAM 
-- **PyTorch 版本**：项目默认使用 **CPU 版本 PyTorch**，以确保最大的兼容性和最简单的安装体验。
+- **PyTorch 版本**：项目默认使用 **CPU 版本 PyTorch**，以确保最大的兼容性和最简单的安装体验。如果想要加速语音合成且你有 NVIDIA GPU，可以自行换成合适的 GPU 版本。
+
+> [!TIP]
+> 使用一键配置脚本时，Miniconda、Node.js 与 **CPU 版 PyTorch** 会自动安装，无需提前准备。
 
 > [!TIP]
 > **NVIDIA GPU 用户可选加速**：如果你有 NVIDIA 显卡并希望加速语音生成，可以手动安装 CUDA 版本的 PyTorch（使用清华源加速下载）：
@@ -204,4 +207,3 @@ MikuChat/
 本项目仅供学习交流使用，请勿用于商业用途。
 
 ---
-
