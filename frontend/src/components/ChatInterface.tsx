@@ -95,7 +95,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
         const loadSessionMessages = async () => {
             if (activeSessionId) {
                 try {
-                    const response = await fetch(`http://localhost:8000/api/sessions/${activeSessionId}/messages`);
+                    const response = await fetch(`http://localhost:8000/api/sessions/${activeSessionId}/messages?username=${encodeURIComponent(currentUser)}`);
                     const data = await response.json();
                     const loadedMessages = data.messages.map((msg: any, index: number) => ({
                         id: `${activeSessionId}-${index}`,

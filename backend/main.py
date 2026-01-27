@@ -48,20 +48,25 @@ app.add_middleware(
 
 # Services and logic
 llm_service = LLMService()
-chat_manager = ChatManager(uploads_dir=UPLOADS_DIR)
 image_service = ImageService()
 news_service = NewsService()
 weather_service = WeatherService()
 
 USER_CONFIG_FILE = "user_config.json"
+SESSIONS_DIR = os.path.join(BACKEND_DIR, "sessions")
 PLAYLISTS_DIR = "sessions"
 
 # Mount static directories
 os.makedirs(MUSIC_DIR, exist_ok=True)
 os.makedirs(AUDIO_DIR, exist_ok=True)
 os.makedirs(UPLOADS_DIR, exist_ok=True)
+os.makedirs(SESSIONS_DIR, exist_ok=True)
 app.mount("/music", StaticFiles(directory=MUSIC_DIR), name="music")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+# Initialize ChatManager with absolute path
+chat_manager = ChatManager(storage_dir=SESSIONS_DIR, uploads_dir=UPLOADS_DIR)
 
 
 
@@ -533,9 +538,9 @@ async def rename_session(session_id: str, request: RenameRequest, username: str 
     return {"success": success}
 
 @app.get("/api/sessions/{session_id}/messages")
-async def get_session_messages(session_id: str):
+async def get_session_messages(session_id: str, username: str):
     """Get all messages for a session"""
-    messages = chat_manager.get_messages(session_id)
+    messages = chat_manager.get_messages(session_id, username)
     return {"messages": messages}
 
 # Chat Endpoint

@@ -63,10 +63,7 @@ export const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 const parsed = JSON.parse(saved);
                 return {
                     ...INITIAL_STATE,
-                    ...parsed,
-                    negiCoins: 200,
-                    ownedItems: ['default_outfit', 'bedroom'], // STRICT RESET
-                    equippedItems: { outfit: 'default_outfit', background: 'bedroom' }
+                    ...parsed
                 };
             } catch (e) {
                 return INITIAL_STATE;
