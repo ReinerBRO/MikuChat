@@ -356,6 +356,28 @@ function Get-WebErrorDetails {
     }
 }
 
+function Show-EnvFileContents {
+    param([System.IO.FileInfo[]]$EnvFiles)
+
+    Write-Section ".env contents"
+    foreach ($file in $EnvFiles) {
+        Write-Host ("--- {0} ---" -f $file.FullName) -ForegroundColor DarkCyan
+        try {
+            $lines = [System.IO.File]::ReadAllLines($file.FullName)
+            if ($lines.Count -eq 0) {
+                Write-WarnLine "<empty file>"
+                continue
+            }
+
+            for ($i = 0; $i -lt $lines.Count; $i++) {
+                Write-Host ("{0,4}: {1}" -f ($i + 1), $lines[$i])
+            }
+        } catch {
+            Write-ErrorLine ("Failed to read {0}: {1}" -f $file.FullName, $_.Exception.Message)
+        }
+    }
+}
+
 function Get-EnvFiles {
     param([string]$SearchRoot)
 
@@ -658,6 +680,8 @@ Write-Section "Discovered .env files"
 foreach ($file in $envFiles) {
     Write-Host $file.FullName
 }
+
+Show-EnvFileContents -EnvFiles $envFiles
 
 $candidates = @(Find-KeyCandidates -EnvFiles $envFiles)
 if ($candidates.Count -eq 0) {
