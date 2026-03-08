@@ -91,7 +91,7 @@ function Get-AncestorPaths {
         $current = $parent
     }
 
-    return $ancestors
+    return @($ancestors.ToArray())
 }
 
 function Test-ProjectRoot {
@@ -157,7 +157,7 @@ function Test-ProjectRoot {
         IsMatch = $true
         Path = $resolved
         Score = $score
-        Reasons = @($reasons)
+        Reasons = @($reasons.ToArray())
     }
 }
 
@@ -211,7 +211,7 @@ function Find-ProjectRootsUnder {
         }
     }
 
-    return $matches
+    return @($matches.ToArray())
 }
 
 function Find-MikuChatFolders {
@@ -314,7 +314,7 @@ function Resolve-ProjectRoot {
 
     return [pscustomobject]@{
         Selected = $selected
-        Candidates = @($matchList)
+        Candidates = @($matchList.ToArray())
         Strategy = "auto-detected"
     }
 }
@@ -427,7 +427,7 @@ function Find-KeyCandidates {
         }
     }
 
-    return $entries
+    return @($entries.ToArray())
 }
 
 function Get-PreferredTestModel {
